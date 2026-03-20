@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src *; img-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src * data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockAds — Gestor de Disponibilidades</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font-display:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --bg:#0a0b0d;
+  --bg2:#111318;
+  --bg3:#181c23;
+  --bg4:#1f242e;
+  --border:#ffffff0f;
+  --border2:#ffffff18;
+  --border3:#ffffff28;
+  --text:#f0f0ee;
+  --text2:#9a9893;
+  --text3:#5a5856;
+  --accent:#00d4a0;
+  --accent2:#00a87e;
+  --accent-dim:#00d4a015;
+  --accent-dim2:#00d4a030;
+  --amber:#f5a623;
+  --amber-dim:#f5a62315;
+  --red:#ff5c5c;
+  --red-dim:#ff5c5c15;
+  --blue:#4d9fff;
+  --blue-dim:#4d9fff15;
+  --purple:#a78bfa;
+  --purple-dim:#a78bfa15;
+  --radius:10px;
+  --radius-sm:6px;
+  --radius-lg:16px;
+}
+html{font-size:14px;background:var(--bg);color:var(--text);font-family:var(--font-body)}
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* LAYOUT */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0}
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+
+/* SIDEBAR */
+.logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
+.logo-mark span{color:var(--accent)}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.nav{padding:12px 0;flex:1}
+.nav-section{padding:8px 20px 4px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;transition:all .15s;color:var(--text2);font-size:13px;border-left:2px solid transparent;position:relative}
+.nav-item:hover{color:var(--text);background:var(--bg3)}
+.nav-item.active{color:var(--accent);background:var(--accent-dim);border-left-color:var(--accent)}
+.nav-item .ico{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .ico{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.user-pill{display:flex;align-items:center;gap:8px}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-dim2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent)}
+.user-name{font-size:12px;color:var(--text2)}
+
+/* PAGE */
+.page{display:none;padding:32px;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px}
+.page-title{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.page-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px}
+.card-sm{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
+.metric::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:.06;transform:translate(20px,-20px)}
+.metric.green::after{background:var(--accent)}
+.metric.amber::after{background:var(--amber)}
+.metric.red::after{background:var(--red)}
+.metric.blue::after{background:var(--blue)}
+.metric-label{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.metric-value{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1;letter-spacing:-1px}
+.metric-value.green{color:var(--accent)}
+.metric-value.amber{color:var(--amber)}
+.metric-value.red{color:var(--red)}
+.metric-value.blue{color:var(--blue)}
+.metric-delta{font-size:11px;color:var(--text3);margin-top:6px}
+.metric-delta.up{color:var(--accent)}
+.metric-delta.down{color:var(--red)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* TABLE */
+.tbl-wrap{overflow:auto;border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{background:var(--bg3)}
+th{text-align:left;padding:10px 14px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-weight:500;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3);color:var(--text)}
+.td-main{color:var(--text)!important;font-weight:500}
+.td-mono{font-family:var(--font-mono);font-size:11px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-dim2);color:var(--accent)}
+.badge-amber{background:var(--amber-dim);color:var(--amber)}
+.badge-red{background:var(--red-dim);color:var(--red)}
+.badge-blue{background:var(--blue-dim);color:var(--blue)}
+.badge-gray{background:var(--bg4);color:var(--text2)}
+.badge-purple{background:var(--purple-dim);color:var(--purple)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--border3);color:var(--text);background:var(--bg3)}
+.btn-primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:500}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2);color:#000}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-icon{padding:7px;border-radius:var(--radius-sm)}
+.btn-danger{border-color:var(--red-dim);color:var(--red)}
+.btn-danger:hover{background:var(--red-dim)}
+
+/* FORM */
+.form-row{display:grid;gap:12px;margin-bottom:14px}
+.form-row.cols-2{grid-template-columns:1fr 1fr}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-row.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+label{display:block;font-size:11px;letter-spacing:.5px;color:var(--text3);margin-bottom:5px;text-transform:uppercase}
+input,select,textarea{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:13px;transition:border .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:80px}
+
+/* PROGRESS BAR */
+.prog-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+.prog-fill.amber{background:var(--amber)}
+.prog-fill.red{background:var(--red)}
+
+/* SECTION */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.sec-title{font-size:14px;font-weight:500;color:var(--text)}
+.sec-actions{display:flex;gap:8px;align-items:center}
+
+/* GANTT */
+.gantt-wrap{overflow-x:auto}
+.gantt-grid{min-width:900px}
+.gantt-header{display:flex;background:var(--bg3);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none}
+.gantt-label-col{width:220px;min-width:220px;padding:10px 14px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);border-right:1px solid var(--border)}
+.gantt-days{flex:1;display:flex}
+.gantt-day-head{flex:1;text-align:center;padding:8px 2px;font-size:10px;color:var(--text3);border-right:1px solid var(--border);min-width:28px}
+.gantt-day-head.today{color:var(--accent);font-weight:600}
+.gantt-row{display:flex;border:1px solid var(--border);border-top:none;min-height:44px;transition:background .15s}
+.gantt-row:hover{background:var(--bg3)}
+.gantt-row-label{width:220px;min-width:220px;padding:0 14px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.gantt-row-name{font-size:12px;font-weight:500;color:var(--text)}
+.gantt-row-cap{font-size:10px;color:var(--text3)}
+.gantt-row-days{flex:1;display:flex;position:relative}
+.gantt-cell{flex:1;border-right:1px solid var(--border);min-width:28px;position:relative}
+.gantt-cell.today-col{background:var(--accent-dim)}
+.gantt-block{position:absolute;top:6px;bottom:6px;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;transition:opacity .15s;z-index:2}
+.gantt-block:hover{opacity:.85}
+.gantt-avail{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;color:var(--text3)}
+.gantt-section{background:var(--bg3);border:1px solid var(--border);border-top:none;padding:8px 14px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--accent);font-weight:500}
+.gantt-row-soporte{min-height:40px;border-top:1px solid var(--border2)!important;background:var(--bg3)!important}
+.gantt-row-cliente{min-height:34px}
+.gantt-row-ocu{min-height:18px;border-bottom:2px solid var(--border2)}
+.gantt-row-ocu .gantt-row-days{display:flex}
+.gantt-row-ocu .gantt-cell{min-height:18px;border-right:none;transition:opacity .1s}
+.gantt-day-head.wend{background:rgba(255,255,255,.03);color:var(--text3)}
+.gantt-cell.wend-col{background:rgba(255,255,255,.016)}
+
+/* UPLOAD */
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:40px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-dim)}
+.upload-icon{width:48px;height:48px;background:var(--bg3);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text3)}
+
+/* AI PANEL */
+.ai-panel{background:linear-gradient(135deg,var(--accent-dim),transparent);border:1px solid var(--accent-dim2);border-radius:var(--radius-lg);padding:20px}
+.ai-label{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.ai-prog{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:10px}
+.ai-prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+
+/* NOTIF */
+.notif-stack{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.notif{padding:12px 16px;border-radius:var(--radius);font-size:13px;animation:slideIn .25s ease;max-width:320px;border:1px solid}
+.notif-success{background:#001f17;border-color:var(--accent-dim2);color:var(--accent)}
+.notif-error{background:#1f0000;border-color:var(--red-dim);color:var(--red)}
+.notif-info{background:var(--bg3);border-color:var(--border2);color:var(--text2)}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:20px;letter-spacing:-.3px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+
+/* CHART BAR */
+.chart-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.chart-bar-label{width:130px;min-width:130px;font-size:12px;color:var(--text2);text-align:right}
+.chart-bar-track{flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.chart-bar-val{width:50px;font-size:12px;font-family:var(--font-mono);color:var(--text2);text-align:right}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.donut-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* MISC */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:var(--bg4);border-radius:4px;font-size:11px;color:var(--text3);font-family:var(--font-mono)}
+.empty{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+.empty-icon{font-size:32px;margin-bottom:8px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mb-24{margin-bottom:24px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
+.text-sm{font-size:12px}.text-xs{font-size:11px}.text-muted{color:var(--text2)}.text-faint{color:var(--text3)}.text-accent{color:var(--accent)}.text-mono{font-family:var(--font-mono)}
+.font-500{font-weight:500}.w-full{width:100%}.hidden{display:none!important}
+
+/* TOOLTIP */
+.tooltip{position:relative}
+.tooltip-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:11px;white-space:nowrap;z-index:100;color:var(--text);pointer-events:none}
+.tooltip:hover .tooltip-text{display:block}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border3)}
+
+/* SPINNER */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CALENDAR MINI */
+.cal-mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-mini-head{text-align:center;font-size:9px;color:var(--text3);padding:3px}
+.cal-mini-day{text-align:center;font-size:11px;padding:5px 2px;border-radius:4px;cursor:pointer;transition:background .1s;color:var(--text2)}
+.cal-mini-day:hover{background:var(--bg4)}
+.cal-mini-day.has-res{background:var(--accent-dim2);color:var(--accent)}
+.cal-mini-day.today{font-weight:600;color:var(--text)}
+.cal-mini-day.other{color:var(--text3)}
+.cal-mini-day.full{background:var(--red-dim);color:var(--red)}
+</style>
+</head>
+<body>
+<div id="notif-stack" class="notif-stack"></div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-reserva">
+<div class="modal">
+<div class="modal-title" id="modal-reserva-title">Nueva reserva</div>
+<div class="form-row cols-2">
+  <div><label>Cliente</label><input id="r-cliente" placeholder="Nombre del cliente"></div>
+  <div><label>N° orden / ref.</label><input id="r-orden" placeholder="ORD-001"></div>
+</div>
+<div class="form-row cols-2">
+  <div><label>Categoría</label><select id="r-cat" onchange="updateRSubcats()"><option value="">— elegir —</option></select></div>
+  <div><label>Soporte</label><select id="r-soporte"><option value="">— elegir —</option></select></div>
+</div>
+<div class="form-row cols-2">
+  <div><label>Cantidad de espacios</label><input id="r-cant" type="number" min="1" value="1"></div>
+  <div><label>Valor (opcional)</label><input id="r-valor" type="number" min="0" placeholder="0"></div>
+</div>
+<div id="r-ranges-container">
+  <label>Períodos de la reserva</label>
+  <div id="r-ranges"></div>
+  <button class="btn btn-sm mt-8" onclick="addRange()">+ Agregar período</button>
+</div>
+<div class="form-row mt-12">
+  <div><label>Notas</label><textarea id="r-notas" rows="2" placeholder="Observaciones..."></textarea></div>
+</div>
+<div class="modal-footer">
+  <button class="btn" onclick="closeModal('modal-reserva')">Cancelar</button>
+  <button class="btn btn-primary" onclick="saveReserva()">Guardar reserva</button>
+</div>
+</div>
+</div>
+
+<div class="modal-bg" id="modal-soporte">
+<div class="modal">
+<div class="modal-title">Gestionar soporte</div>
+<div class="form-row cols-2">
+  <div><label>Categoría</label><select id="s-cat" onchange="updateSSubcats()"><option value="">— elegir —</option></select></div>
+  <div><label>Nombre del soporte</label><input id="s-nombre" placeholder="Ej: Lateral Extra"></div>
+</div>
+<div class="form-row cols-2">
+  <div><label>Capacidad actual</label><input id="s-cap" type="number" min="1" placeholder="300"></div>
+  <div><label>Unidad</label><select id="s-unidad"><option>espacios</option><option>pantallas</option><option>circuitos</option><option>leds</option><option>banners</option></select></div>
+</div>
+<div class="form-row"><div><label>Descripción / ubicación</label><input id="s-desc" placeholder="Ej: Zona metropolitana, rutas principales"></div></div>
+<div class="modal-footer">
+  <button class="btn" onclick="closeModal('modal-soporte')">Cancelar</button>
+  <button class="btn btn-primary" onclick="saveSoporte()">Guardar</button>
+</div>
+</div>
+</div>
+
+<div class="modal-bg" id="modal-cap">
+<div class="modal">
+<div class="modal-title">Actualizar capacidad</div>
+<div id="modal-cap-info" class="mb-16 text-muted text-sm"></div>
+<div class="form-row cols-2">
+  <div><label>Nueva capacidad</label><input id="cap-valor" type="number" min="1"></div>
+  <div><label>Vigente desde</label><input id="cap-desde" type="date"></div>
+</div>
+<div class="form-row"><div><label>Motivo</label><input id="cap-motivo" placeholder="Ej: Renovación contrato temporada alta"></div></div>
+<div class="modal-footer">
+  <button class="btn" onclick="closeModal('modal-cap')">Cancelar</button>
+  <button class="btn btn-primary" onclick="saveCapacidad()">Actualizar</button>
+</div>
+</div>
+</div>
+
+<div class="modal-bg" id="modal-confirm">
+<div class="modal" style="width:380px">
+<div class="modal-title" id="modal-confirm-title">Confirmar acción</div>
+<div class="text-muted mb-16" id="modal-confirm-msg"></div>
+<div class="modal-footer">
+  <button class="btn" onclick="closeModal('modal-confirm')">Cancelar</button>
+  <button class="btn btn-danger" id="modal-confirm-btn">Confirmar</button>
+</div>
+</div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Stock<span>Ads</span></div>
+    <div class="logo-sub">Disponibilidades 2026</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Ventas</div>
+    <div class="nav-item active" onclick="showPage('dashboard-ventas',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Disponibilidad
+    </div>
+    <div class="nav-item" onclick="showPage('disponibilidad-anual',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="1" y1="7" x2="15" y2="7" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="3" x2="5" y2="13" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.5 1.5"/><line x1="9" y1="3" x2="9" y2="13" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.5 1.5"/></svg>
+      Disponibilidad anual
+    </div>
+    <div class="nav-item" onclick="showPage('consulta-rapida',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.3"/><line x1="9.5" y1="9.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Consulta rápida
+    </div>
+    <div class="nav-item" onclick="showPage('reservas',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Reservas
+      <span class="nav-badge" id="badge-vence"></span>
+    </div>
+    <div class="nav-item" onclick="showPage('scanner',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Escanear orden
+    </div>
+    <div class="nav-section">Gerencia</div>
+    <div class="nav-item" onclick="showPage('dashboard-gerencia',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><path d="M2 12 L5 8 L8 10 L11 5 L14 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Dashboard gerencial
+    </div>
+    <div class="nav-item" onclick="showPage('clientes',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M1 14c0-3 2.2-5 5-5s5 2 5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M12 7c1.5 0 3 1 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      Clientes
+    </div>
+    <div class="nav-section">Config.</div>
+    <div class="nav-item" onclick="showPage('soportes',this)">
+      <svg class="ico" viewBox="0 0 16 16" fill="none"><path d="M8 2v2M8 12v2M2 8h2M12 8h2M4.1 4.1l1.4 1.4M10.5 10.5l1.4 1.4M4.1 11.9l1.4-1.4M10.5 5.5l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+      Soportes
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn btn-sm w-full mb-8" onclick="showSetupBanner()" style="font-size:11px;gap:6px">
+      <span id="sheets-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
+      Google Sheets
+    </button>
+    <div class="user-pill">
+      <div class="user-avatar">EV</div>
+      <div>
+        <div class="user-name" style="color:var(--text);font-size:12px;font-weight:500">Ejecutivo</div>
+        <div class="user-name">Ventas</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- PAGE: DASHBOARD VENTAS -->
+<div class="page active" id="page-dashboard-ventas">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Disponibilidad</div>
+      <div class="page-sub">Consultá qué espacios tenés libres en cualquier período</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-reserva');initReservaModal()">+ Nueva reserva</button>
+  </div>
+
+  <div class="card mb-16">
+    <div class="sec-head mb-16">
+      <div class="sec-title">Consultar disponibilidad</div>
+    </div>
+    <div class="form-row cols-4 mb-12">
+      <div><label>Categoría</label>
+        <select id="dv-cat" onchange="updateDVSoportes()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div><label>Soporte</label>
+        <select id="dv-soporte"><option value="">Todos</option></select>
+      </div>
+      <div><label>Desde</label><input type="date" id="dv-desde"></div>
+      <div><label>Hasta</label><input type="date" id="dv-hasta"></div>
+    </div>
+    <button class="btn btn-primary" onclick="consultarDisponibilidad()">Consultar disponibilidad</button>
+  </div>
+
+  <div id="dv-results"></div>
+
+  <div class="grid-2 gap-16 mt-16">
+    <div class="card">
+      <div class="sec-head mb-12"><div class="sec-title">Alertas de vencimiento</div></div>
+      <div id="alertas-vence"></div>
+    </div>
+    <div class="card">
+      <div class="sec-head mb-12"><div class="sec-title">Calendario del mes</div></div>
+      <div class="flex items-center justify-between mb-12">
+        <button class="btn btn-sm btn-icon" onclick="calMiniPrev()">‹</button>
+        <span class="text-sm font-500" id="cal-mini-title"></span>
+        <button class="btn btn-sm btn-icon" onclick="calMiniNext()">›</button>
+      </div>
+      <div class="cal-mini" id="cal-mini-heads"></div>
+      <div class="cal-mini" id="cal-mini-days"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: DISPONIBILIDAD ANUAL -->
+<div class="page" id="page-disponibilidad-anual">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Disponibilidad anual</div>
+      <div class="page-sub">Todo el año 2026 — hacé click en un soporte para ver sus campañas</div>
+    </div>
+    <div class="flex gap-8">
+      <select id="da-cat" onchange="renderDisponibilidadAnual()" style="width:180px"><option value="">Todas las categorías</option></select>
+      <button class="btn btn-primary" onclick="openModal('modal-reserva');initReservaModal()">+ Reserva</button>
+    </div>
+  </div>
+
+  <!-- Navegación rápida por mes -->
+  <div id="da-month-nav" style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap"></div>
+  <div id="da-debug" style="display:none;padding:10px 14px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:12px;font-size:11px;font-family:var(--font-mono);color:var(--text2)"></div>
+  <div id="da-content"></div>
+</div>
+
+<!-- PAGE: CONSULTA RÁPIDA -->
+<div class="page" id="page-consulta-rapida">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Consulta rápida</div>
+      <div class="page-sub">¿Qué tengo libre en un período?</div>
+    </div>
+  </div>
+  <div class="card mb-20" style="padding:20px 24px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div><label>Desde</label><input type="date" id="cq-desde"></div>
+      <div><label>Hasta</label><input type="date" id="cq-hasta"></div>
+      <div><label>Categoría</label>
+        <select id="cq-cat">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="height:38px" onclick="renderConsultaRapida()">Buscar</button>
+    </div>
+  </div>
+  <div id="cq-results"></div>
+</div>
+
+<!-- PAGE: RESERVAS -->
+<div class="page" id="page-reservas">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Reservas</div>
+      <div class="page-sub">Todas las campañas registradas</div>
+    </div>
+    <div class="flex gap-8">
+      <input id="res-search" placeholder="Buscar cliente, orden..." style="width:220px" oninput="renderReservas()">
+      <select id="res-cat" onchange="renderReservas()" style="width:160px"><option value="">Todas las categorías</option></select>
+      <select id="res-estado" onchange="renderReservas()" style="width:130px">
+        <option value="">Todos</option>
+        <option value="activa">Activas</option>
+        <option value="vence">Vence pronto</option>
+        <option value="vencida">Vencidas</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('modal-reserva');initReservaModal()">+ Nueva</button>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap"><table id="tbl-reservas">
+      <thead><tr><th>Orden</th><th>Cliente</th><th>Soporte</th><th>Períodos</th><th>Espacios</th><th>Valor</th><th>Estado</th><th></th></tr></thead>
+      <tbody id="tbody-reservas"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- PAGE: SCANNER -->
+<div class="page" id="page-scanner">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Escanear orden</div>
+      <div class="page-sub">Pegá texto, subí imagen o PDF — la IA detecta el formato automáticamente</div>
+    </div>
+  </div>
+  <div class="grid-2 gap-16">
+    <div>
+      <!-- Tabs: imagen vs texto -->
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)">
+        <div id="scan-tab-file" onclick="setScanTab('file')" style="padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--accent);font-weight:500">📎 Imagen / PDF</div>
+        <div id="scan-tab-text" onclick="setScanTab('text')" style="padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2)">💬 Pegar texto</div>
+      </div>
+
+      <!-- Panel archivo -->
+      <div id="scan-panel-file">
+        <div class="card mb-12">
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-in').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">Subí la orden aquí</div>
+            <div class="upload-sub">PDF, JPG, PNG — arrastrá o hacé click</div>
+          </div>
+          <input type="file" id="file-in" accept=".pdf,image/*" style="display:none" onchange="handleFile(this.files[0])">
+        </div>
+      </div>
+
+      <!-- Panel texto -->
+      <div id="scan-panel-text" style="display:none">
+        <div class="card mb-12">
+          <label style="margin-bottom:8px;display:block">Pegá el texto de la orden, email o WhatsApp</label>
+          <textarea id="scan-text-input" rows="8" placeholder="Ej: hola Emi, te pido marcar Nike pantalla curva desde el 23/3 por 8 semanas.
+
+O pegá una propuesta, orden de sistema, email, etc."></textarea>
+          <button class="btn btn-primary w-full mt-12" onclick="handleTextScan()">Analizar con IA</button>
+        </div>
+      </div>
+
+      <!-- Tipos soportados -->
+      <div class="card" style="padding:14px 16px">
+        <div class="text-faint text-sm mb-8">Formatos que reconoce la IA:</div>
+        <div class="flex gap-8 flex-wrap">
+          <span class="badge badge-gray">Propuesta comercial</span>
+          <span class="badge badge-gray">Orden de sistema</span>
+          <span class="badge badge-gray">WhatsApp / email</span>
+          <span class="badge badge-gray">Contrato PDF</span>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.6">
+          La IA calcula fechas automáticamente (ej: "23/3 por 8 semanas" → 23/03 al 17/05) y busca el soporte más parecido en tu planilla.
+        </div>
+      </div>
+    </div>
+
+    <div id="scan-result-area">
+      <div class="card" style="padding:40px;text-align:center">
+        <div style="font-size:36px;margin-bottom:12px">🤖</div>
+        <div class="font-500 mb-8">IA lista para analizar</div>
+        <div class="text-muted text-sm">Subí un documento o pegá el texto y la IA extraerá los datos automáticamente</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: DASHBOARD GERENCIA -->
+<div class="page" id="page-dashboard-gerencia">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dashboard gerencial</div>
+      <div class="page-sub">Métricas y análisis para decisiones comerciales</div>
+    </div>
+    <select id="ger-year" onchange="renderGerencia()" style="width:100px"></select>
+  </div>
+  <div class="metrics-grid" id="ger-metrics"></div>
+  <div class="grid-2 gap-16 mb-16">
+    <div class="card">
+      <div class="sec-head mb-16"><div class="sec-title">Ocupación por categoría</div></div>
+      <div id="ger-ocu-bars"></div>
+    </div>
+    <div class="card">
+      <div class="sec-head mb-16"><div class="sec-title">Ocupación mensual</div></div>
+      <canvas id="ger-chart-month" height="180"></canvas>
+    </div>
+  </div>
+  <div class="grid-2 gap-16 mb-16">
+    <div class="card">
+      <div class="sec-head mb-16"><div class="sec-title">Ranking clientes</div></div>
+      <div id="ger-ranking"></div>
+    </div>
+    <div class="card">
+      <div class="sec-head mb-16">
+        <div class="sec-title">Campañas por vencer</div>
+        <div class="flex gap-8">
+          <button class="btn btn-sm" id="ger-vence-30" onclick="setVenceFilter(30,this)">30d</button>
+          <button class="btn btn-sm" id="ger-vence-60" onclick="setVenceFilter(60,this)">60d</button>
+          <button class="btn btn-sm" id="ger-vence-90" onclick="setVenceFilter(90,this)">90d</button>
+        </div>
+      </div>
+      <div id="ger-vence-list"></div>
+    </div>
+  </div>
+  <div class="card mb-16">
+    <div class="sec-head mb-16"><div class="sec-title">Ingresos proyectados por mes</div></div>
+    <canvas id="ger-chart-ingresos" height="140"></canvas>
+  </div>
+  <div class="card">
+    <div class="sec-head mb-16"><div class="sec-title">Alertas y oportunidades</div></div>
+    <div id="ger-alertas"></div>
+  </div>
+</div>
+
+<!-- PAGE: CLIENTES -->
+<div class="page" id="page-clientes">
+  <div class="page-header">
+    <div><div class="page-title">Clientes</div><div class="page-sub">Historial y actividad por cliente</div></div>
+    <input id="cli-search" placeholder="Buscar cliente..." style="width:220px" oninput="renderClientes()">
+  </div>
+  <div id="clientes-grid"></div>
+</div>
+
+<!-- PAGE: SOPORTES -->
+<div class="page" id="page-soportes">
+  <div class="page-header">
+    <div><div class="page-title">Soportes</div><div class="page-sub">Gestión de categorías, soportes y capacidades</div></div>
+    <button class="btn btn-primary" onclick="openModal('modal-soporte');initSoporteModal()">+ Nuevo soporte</button>
+  </div>
+  <div id="soportes-grid"></div>
+</div>
+
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ============================================================
+// CONFIG — pegá tu URL de Apps Script aquí
+// ============================================================
+let SCRIPT_URL = localStorage.getItem('sa_script_url') || '';
+
+// ============================================================
+// DATA
+// ============================================================
+const CATS = [
+  {id:'buses',    name:'Buses',           color:'#00d4a0'},
+  {id:'leds',     name:'Leds',            color:'#4d9fff'},
+  {id:'freeshops',name:'Freeshops',       color:'#a78bfa'},
+  {id:'shoppings',name:'Circ. Shoppings', color:'#f5a623'},
+  {id:'walls',    name:'Walls',           color:'#ff5c5c'},
+  {id:'malls',    name:'Malls',           color:'#e879f9'},
+];
+
+let state = {
+  soportes: [],
+  reservas: [],
+  calMiniYear: new Date().getFullYear(),
+  calMiniMonth: new Date().getMonth(),
+  venceFilter: 30,
+  editingReservaId: null,
+  editingSoporteId: null,
+  capSoporteId: null,
+  sheetConnected: false,
+  loading: false,
+};
+
+// ============================================================
+// GOOGLE SHEETS — lectura y escritura
+// ============================================================
+async function sheetCall(params){
+  if(!SCRIPT_URL) throw new Error('Sin URL de script');
+  let url = SCRIPT_URL + '?action=' + params.action;
+  // Parámetros simples van directo en la URL, datos complejos como payload
+  if(params.catId) url += '&catId=' + encodeURIComponent(params.catId);
+  if(params.action !== 'getAll' && params.action !== 'getCat' && params.action !== 'getContratos' && params.action !== 'debug'){
+    url += '&payload=' + encodeURIComponent(JSON.stringify(params));
+  }
+  const res = await fetch(url, {redirect:'follow'});
+  const text = await res.text();
+  let data;
+  try{ data = JSON.parse(text); }
+  catch(e){ throw new Error('Respuesta inválida: ' + text.slice(0,120)); }
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadFromSheet(){
+  if(!SCRIPT_URL){ showSetupBanner(); return; }
+  setLoading(true,'Conectando con Google Sheets...');
+  try{
+    // Cargar cada categoría en paralelo para evitar timeout
+    const catIds=['buses','leds','freeshops','shoppings','walls','malls'];
+    setLoading(true,'Cargando soportes (1/7)...');
+
+    const results = await Promise.all(
+      catIds.map(catId => sheetCall({action:'getCat', catId}).catch(e=>({error:e.message,catId})))
+    );
+
+    state.soportes = [];
+    state.reservas = [];
+
+    results.forEach((data,i)=>{
+      if(data.error){
+        console.warn('Error cargando',catIds[i],':',data.error);
+        return;
+      }
+      state.soportes = state.soportes.concat(data.soportes||[]);
+      state.reservas = state.reservas.concat(data.reservas||[]);
+    });
+
+    // Cargar contratos por separado
+    setLoading(true,'Cargando contratos...');
+    try{
+      const contratos = await sheetCall({action:'getContratos'});
+      if(contratos.reservas){
+        // Resolver soporteId desde nombre
+        contratos.reservas.forEach(r=>{
+          if(!r.soporteId && r.soporteNombre){
+            const nl=r.soporteNombre.toLowerCase();
+            const s=state.soportes.find(s=>s.name.toLowerCase().includes(nl)||nl.includes(s.name.toLowerCase()));
+            if(s) r.soporteId=s.id;
+          }
+          state.reservas.push(r);
+        });
+      }
+    }catch(e){ console.warn('Error cargando contratos:',e.message); }
+
+    state.sheetConnected = true;
+    const dot=document.getElementById('sheets-status-dot');
+    if(dot)dot.style.background='#00d4a0';
+    hideSetupBanner();
+    notify(`Datos cargados: ${state.soportes.length} soportes, ${state.reservas.length} reservas ✓`,'success');
+    refreshCurrentPage();
+  } catch(e){
+    notify('Error al conectar con Sheets: ' + e.message,'error');
+    showSetupBanner();
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function pushReservaToSheet(reserva){
+  if(!SCRIPT_URL || !state.sheetConnected) return;
+  try{
+    const s = getSoporte(reserva.soporteId);
+    await sheetCall({
+      action:'addReserva',
+      ...reserva,
+      soporteNombre: s ? s.name : reserva.soporteId,
+    });
+    notify('Guardado en Google Sheets ✓','success');
+  } catch(e){
+    notify('Error al guardar en Sheets: ' + e.message,'error');
+  }
+}
+
+async function pushEditToSheet(reserva){
+  if(!SCRIPT_URL || !state.sheetConnected || !reserva.row) return;
+  try{
+    const s = getSoporte(reserva.soporteId);
+    await sheetCall({action:'editReserva', ...reserva, soporteNombre: s?s.name:reserva.soporteId});
+  } catch(e){
+    notify('Advertencia: no se pudo actualizar en Sheets: ' + e.message,'error');
+  }
+}
+
+async function pushDeleteToSheet(reserva){
+  if(!SCRIPT_URL || !state.sheetConnected || !reserva.row) return;
+  try{ await sheetCall({action:'deleteReserva', row: reserva.row}); }
+  catch(e){ notify('No se pudo eliminar en Sheets: ' + e.message,'error'); }
+}
+
+// ============================================================
+// SETUP BANNER
+// ============================================================
+function showSetupBanner(){
+  if(document.getElementById('setup-banner')) return;
+  const b = document.createElement('div');
+  b.id = 'setup-banner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:#0f1a14;border-bottom:1px solid #00d4a030;padding:12px 24px;display:flex;align-items:center;gap:16px;font-size:13px';
+  b.innerHTML = `
+    <span style="color:#00d4a0;font-weight:500">📊 Conectar Google Sheets</span>
+    <input id="url-input" placeholder="Pegá la URL del Apps Script aquí..." value="${SCRIPT_URL}"
+      style="flex:1;max-width:520px;padding:7px 12px;background:#1a2a1a;border:1px solid #00d4a040;border-radius:6px;color:#f0f0ee;font-size:12px">
+    <button onclick="setScriptUrl()" style="padding:7px 16px;background:#00d4a0;color:#000;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer">Conectar</button>
+    <button onclick="hideSetupBanner()" style="padding:7px 12px;background:transparent;color:#5a5856;border:1px solid #ffffff18;border-radius:6px;font-size:12px;cursor:pointer">Usar datos de demo</button>
+    <a href="https://script.google.com" target="_blank" style="color:#4d9fff;font-size:11px;white-space:nowrap">¿Cómo configurar? →</a>
+  `;
+  document.body.prepend(b);
+  // Empujar el layout
+  document.querySelector('.shell').style.marginTop='54px';
+}
+
+function hideSetupBanner(){
+  const b = document.getElementById('setup-banner');
+  if(b) b.remove();
+  document.querySelector('.shell').style.marginTop='';
+  // Si no hay datos, cargar demo
+  if(!state.soportes.length) loadDemoData();
+}
+
+function setScriptUrl(){
+  const url = document.getElementById('url-input').value.trim();
+  if(!url){ notify('Pegá la URL del script primero','error'); return; }
+  SCRIPT_URL = url;
+  localStorage.setItem('sa_script_url', url);
+  loadFromSheet();
+}
+
+function loadDemoData(){
+  state.soportes = DEMO_SOPORTES;
+  state.reservas = DEMO_RESERVAS;
+  refreshCurrentPage();
+}
+
+// ============================================================
+// DEMO DATA (fallback sin Sheets)
+// ============================================================
+const DEMO_SOPORTES = [
+  {id:'s1',catId:'buses',name:'Lateral Extra',cap:300,unit:'espacios',desc:''},
+  {id:'s2',catId:'buses',name:'Lateral 2 Paños',cap:180,unit:'espacios',desc:''},
+  {id:'s3',catId:'buses',name:'Lateral 1 Paño',cap:120,unit:'espacios',desc:''},
+  {id:'s4',catId:'buses',name:'Trasero / Luneta',cap:39,unit:'espacios',desc:''},
+  {id:'s5',catId:'buses',name:'Bus Interior',cap:80,unit:'espacios',desc:''},
+  {id:'s6',catId:'buses',name:'Full Bus',cap:20,unit:'espacios',desc:''},
+  {id:'s7',catId:'buses',name:'Lateral Full',cap:45,unit:'espacios',desc:''},
+  {id:'s8',catId:'buses',name:'Trasero Full',cap:39,unit:'espacios',desc:''},
+  {id:'s9',catId:'leds',name:'Rivera 4127',cap:12,unit:'leds',desc:'Rivera y Propios'},
+  {id:'s10',catId:'leds',name:'Duciel',cap:8,unit:'leds',desc:''},
+  {id:'s11',catId:'leds',name:'La Especialista',cap:6,unit:'leds',desc:''},
+  {id:'s12',catId:'freeshops',name:'LED Partidas MVD',cap:2,unit:'pantallas',desc:''},
+  {id:'s13',catId:'freeshops',name:'Videowall Arribos',cap:1,unit:'pantallas',desc:''},
+  {id:'s14',catId:'freeshops',name:'LED Embarques',cap:4,unit:'pantallas',desc:''},
+  {id:'s15',catId:'shoppings',name:'Punta del Este',cap:32,unit:'circuitos',desc:''},
+  {id:'s16',catId:'shoppings',name:'MVD Centro',cap:32,unit:'circuitos',desc:''},
+  {id:'s17',catId:'shoppings',name:'Minas',cap:32,unit:'circuitos',desc:''},
+  {id:'s18',catId:'walls',name:'Italia 4381 esq Caldas',cap:1,unit:'espacios',desc:''},
+  {id:'s19',catId:'walls',name:'18 Julio 1625 esq Roxlo',cap:1,unit:'espacios',desc:''},
+  {id:'s20',catId:'walls',name:'Asamblea 4104 esq Propios',cap:1,unit:'espacios',desc:''},
+  {id:'s21',catId:'malls',name:'Banners Parking — Salto',tipoSoporte:'Banners Parking',ubicacion:'Salto',cap:4,unit:'banners',desc:'0.7 x 1.6'},
+  {id:'s22',catId:'malls',name:'Banners Parking — Paysandú',tipoSoporte:'Banners Parking',ubicacion:'Paysandú',cap:12,unit:'banners',desc:'0.7 x 1.6'},
+  {id:'s23',catId:'malls',name:'Banners Parking — Minas',tipoSoporte:'Banners Parking',ubicacion:'Minas',cap:6,unit:'banners',desc:''},
+  {id:'s24',catId:'malls',name:'LED Interior — Salto',tipoSoporte:'LED Interior',ubicacion:'Salto',cap:3,unit:'leds',desc:''},
+  {id:'s25',catId:'malls',name:'LED Interior — Paysandú',tipoSoporte:'LED Interior',ubicacion:'Paysandú',cap:4,unit:'leds',desc:''},
+];
+
+const DEMO_RESERVAS = [
+  {id:'R001',cliente:'Coca-Cola',orden:'ORD-001',soporteId:'s1',cant:120,valor:85000,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R002',cliente:"McDonald's",orden:'ORD-002',soporteId:'s1',cant:50,valor:35000,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R003',cliente:'BROU',orden:'ORD-003',soporteId:'s9',cant:1,valor:4500,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R004',cliente:'SBI',orden:'ORD-004',soporteId:'s9',cant:1,valor:4500,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R005',cliente:'Conaprole',orden:'ORD-005',soporteId:'s15',cant:1,valor:3200,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R006',cliente:'La Especialista',orden:'ORD-007',soporteId:'s1',cant:35,valor:24500,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R007',cliente:'AMEC',orden:'ORD-008',soporteId:'s1',cant:35,valor:24500,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R008',cliente:'Veo Casas',orden:'ORD-009',soporteId:'s8',cant:10,valor:7000,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R009',cliente:'SBI',orden:'ORD-010',soporteId:'s19',cant:1,valor:5000,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+  {id:'R010',cliente:'Rasa',orden:'ORD-013',soporteId:'s4',cant:8,valor:5600,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-06-30'},{desde:'2026-09-01',hasta:'2026-12-31'}]},
+  {id:'R011',cliente:'Conaprole',orden:'ORD-015',soporteId:'s21',cant:1,valor:1800,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-06-30'}]},
+  {id:'R012',cliente:'Conaprole',orden:'ORD-016',soporteId:'s22',cant:2,valor:3600,notas:'',fuente:'hoja',rangos:[{desde:'2026-01-01',hasta:'2026-12-31'}]},
+];
+
+// ============================================================
+// LOADING STATE
+// ============================================================
+function setLoading(on, msg=''){
+  state.loading = on;
+  let el = document.getElementById('loading-overlay');
+  if(on){
+    if(!el){
+      el = document.createElement('div');
+      el.id='loading-overlay';
+      el.style.cssText='position:fixed;inset:0;background:rgba(10,11,13,.7);z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;backdrop-filter:blur(2px)';
+      el.innerHTML=`<div style="width:32px;height:32px;border:3px solid rgba(255,255,255,.1);border-top-color:#00d4a0;border-radius:50%;animation:spin .7s linear infinite"></div><div style="font-size:13px;color:#9a9893">${msg}</div>`;
+      document.body.appendChild(el);
+    }
+  } else {
+    if(el) el.remove();
+  }
+}
+
+function refreshCurrentPage(){
+  const active = document.querySelector('.page.active');
+  if(!active) return;
+  const id = active.id.replace('page-','');
+  if(id==='dashboard-ventas') renderDashboardVentas();
+  if(id==='disponibilidad-anual') renderDisponibilidadAnual();
+  if(id==='reservas') renderReservas();
+  if(id==='dashboard-gerencia') renderGerencia();
+  if(id==='clientes') renderClientes();
+  if(id==='soportes') renderSoportes();
+  initAllSelects();
+  updateVenceBadge();
+}
+
+function save(){
+  // Con Sheets como backend no guardamos en localStorage
+  // solo se mantiene en memoria hasta recargar
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getCat(id){return CATS.find(c=>c.id===id)}
+function getSoporte(id){return state.soportes.find(s=>s.id===id)}
+function getSoportesBycat(catId){return state.soportes.filter(s=>!catId||s.catId===catId)}
+function parseDate(s){return s?new Date(s+'T00:00:00'):null}
+function fmtDate(d){if(!d)return'—';const dt=typeof d==='string'?parseDate(d):d;return dt.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function fmtMoney(v){return v?'$'+Number(v).toLocaleString('es-UY'):'—'}
+function today(){return new Date().toISOString().slice(0,10)}
+function addDays(dateStr,n){const d=parseDate(dateStr);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function notify(msg,type='info'){
+  const s=document.getElementById('notif-stack');
+  const el=document.createElement('div');
+  el.className=`notif notif-${type}`;el.textContent=msg;
+  s.appendChild(el);setTimeout(()=>el.remove(),3500);
+}
+function openModal(id){document.getElementById('modal-'+id.replace('modal-','')).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function randId(){return 'R'+String(Math.floor(Math.random()*90000+10000))}
+
+// Reserva activa en una fecha dada
+function normDate(s){
+  // Normaliza fechas que puedan venir como "2026-01-01", "01/01/2026", Date objects, etc.
+  if(!s) return '';
+  if(s instanceof Date) return s.toISOString().slice(0,10);
+  const str=String(s).trim().slice(0,10);
+  // dd/mm/yyyy → yyyy-mm-dd
+  const m=str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return str;
+}
+
+function reservaActivaEnFecha(r,dateStr){
+  if(!r.rangos||!r.rangos.length) return false;
+  return r.rangos.some(rg=>{
+    const d=normDate(rg.desde);
+    const h=normDate(rg.hasta);
+    return d&&h&&dateStr>=d&&dateStr<=h;
+  });
+}
+
+// Espacios ocupados de un soporte en una fecha
+function ocupadosEnFecha(soporteId,dateStr){
+  return state.reservas
+    .filter(r=>r.soporteId===soporteId&&reservaActivaEnFecha(r,dateStr))
+    .reduce((s,r)=>s+Number(r.cant),0);
+}
+
+// Disponibilidad de un soporte en una fecha
+function disponibleEnFecha(soporteId,dateStr){
+  const s=getSoporte(soporteId);if(!s)return 0;
+  return Math.max(0,s.cap-ocupadosEnFecha(soporteId,dateStr));
+}
+
+// Status badge
+function statusBadge(r){
+  const t=today();
+  const activo=r.rangos.some(rg=>t>=rg.desde&&t<=rg.hasta);
+  const proximoFin=r.rangos.reduce((min,rg)=>rg.hasta>t&&(!min||rg.hasta<min)?rg.hasta:min,null);
+  if(activo){
+    if(proximoFin){
+      const dias=(parseDate(proximoFin)-parseDate(t))/86400000;
+      if(dias<=30)return`<span class="badge badge-amber">Vence en ${Math.round(dias)}d</span>`;
+    }
+    return`<span class="badge badge-green">Activa</span>`;
+  }
+  const futuro=r.rangos.some(rg=>t<rg.desde);
+  if(futuro)return`<span class="badge badge-blue">Próxima</span>`;
+  return`<span class="badge badge-gray">Finalizada</span>`;
+}
+
+// ============================================================
+// NAV
+// ============================================================
+let chartsCreated={};
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='dashboard-ventas')renderDashboardVentas();
+  if(id==='disponibilidad-anual'){initAllSelects();renderDisponibilidadAnual();}
+  if(id==='consulta-rapida')initConsultaRapida();
+  if(id==='reservas')renderReservas();
+  if(id==='dashboard-gerencia')renderGerencia();
+  if(id==='clientes')renderClientes();
+  if(id==='soportes')renderSoportes();
+}
+
+// ============================================================
+// INIT SELECTS
+// ============================================================
+function initAllSelects(){
+  const catOpts = CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const catOptsAll = `<option value="">Todas las categorías</option>`+catOpts;
+  const catOptsAllTodas = `<option value="">Todas</option>`+catOpts;
+  ['dv-cat','res-cat','da-cat'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML=catOptsAll;
+  });
+  ['cq-cat'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML=catOptsAllTodas;
+  });
+  ['r-cat','s-cat'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=`<option value="">— elegir —</option>`+catOpts;
+  });
+  const gy=document.getElementById('ger-year');
+  if(gy)gy.innerHTML=[2025,2026,2027].map(y=>`<option value="${y}"${y===2026?' selected':''}>${y}</option>`).join('');
+  const dvD=document.getElementById('dv-desde');
+  const dvH=document.getElementById('dv-hasta');
+  if(dvD&&!dvD.value)dvD.value=today();
+  if(dvH&&!dvH.value)dvH.value=addDays(today(),30);
+  updateVenceBadge();
+}
+
+function initConsultaRapida(){
+  initAllSelects();
+  const cqD=document.getElementById('cq-desde');
+  const cqH=document.getElementById('cq-hasta');
+  if(cqD&&!cqD.value)cqD.value=today();
+  if(cqH&&!cqH.value)cqH.value=addDays(today(),30);
+}
+
+function updateVenceBadge(){
+  const t=today();const limit=addDays(t,30);
+  const cnt=state.reservas.filter(r=>r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit)).length;
+  const badge=document.getElementById('badge-vence');
+  if(badge)badge.textContent=cnt>0?cnt:'';
+  if(badge)badge.style.display=cnt>0?'':'none';
+}
+
+// ============================================================
+// DASHBOARD VENTAS
+// ============================================================
+function renderDashboardVentas(){
+  renderAlertas();renderCalMini();populateDVSelects();
+}
+
+function populateDVSelects(){
+  updateDVSoportes();
+}
+
+function updateDVSoportes(){
+  const catId=document.getElementById('dv-cat').value;
+  const sel=document.getElementById('dv-soporte');
+  sel.innerHTML=`<option value="">Todos</option>`+
+    getSoportesBycat(catId).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function consultarDisponibilidad(){
+  const catId=document.getElementById('dv-cat').value;
+  const soporteId=document.getElementById('dv-soporte').value;
+  const desde=document.getElementById('dv-desde').value;
+  const hasta=document.getElementById('dv-hasta').value;
+  if(!desde||!hasta){notify('Seleccioná un período','error');return;}
+
+  const soportes=soporteId?[getSoporte(soporteId)]:getSoportesBycat(catId);
+  const results=soportes.filter(Boolean).map(s=>{
+    // Calcular disponibilidad mínima en el período
+    let minDisp=s.cap,totalOcu=0;
+    const d=parseDate(desde);const h=parseDate(hasta);
+    for(let dt=new Date(d);dt<=h;dt.setDate(dt.getDate()+1)){
+      const ds=dt.toISOString().slice(0,10);
+      const ocu=ocupadosEnFecha(s.id,ds);
+      const disp=Math.max(0,s.cap-ocu);
+      if(disp<minDisp)minDisp=disp;
+      totalOcu=Math.max(totalOcu,ocu);
+    }
+    const pct=Math.round(totalOcu/s.cap*100);
+    return{s,minDisp,totalOcu,pct};
+  });
+
+  const container=document.getElementById('dv-results');
+  if(!results.length){container.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>Sin soportes en ese filtro</div>';return;}
+
+  container.innerHTML=`
+    <div class="card" style="padding:0;overflow:hidden">
+      <table><thead><tr>
+        <th>Soporte</th><th>Categoría</th><th>Capacidad total</th>
+        <th>Ocupado (pico)</th><th>Disponible (mínimo)</th><th>Ocupación</th><th></th>
+      </tr></thead><tbody>
+        ${results.map(({s,minDisp,totalOcu,pct})=>{
+          const cat=getCat(s.catId);
+          const colorClass=minDisp===0?'red':pct>70?'amber':'green';
+          return`<tr>
+            <td class="td-main">${s.name}</td>
+            <td><span class="badge" style="background:${cat.color}18;color:${cat.color}">${cat.name}</span></td>
+            <td>${s.cap} ${s.unit}</td>
+            <td>${totalOcu}</td>
+            <td><span class="badge badge-${colorClass}">${minDisp} ${s.unit}</span></td>
+            <td style="min-width:120px">
+              <div class="prog-bar"><div class="prog-fill ${colorClass}" style="width:${pct}%"></div></div>
+              <div class="text-xs text-faint mt-8">${pct}%</div>
+            </td>
+            <td><button class="btn btn-sm btn-primary" onclick="openReservaForSoporte('${s.id}')">Reservar</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>
+    </div>`;
+}
+
+function openReservaForSoporte(sId){
+  initReservaModal();
+  const s=getSoporte(sId);if(!s)return;
+  document.getElementById('r-cat').value=s.catId;
+  updateRSubcats();
+  setTimeout(()=>document.getElementById('r-soporte').value=s.id,50);
+  openModal('modal-reserva');
+}
+
+function renderAlertas(){
+  const t=today();const limit30=addDays(t,30);
+  const vencen=state.reservas.filter(r=>r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit30));
+  const el=document.getElementById('alertas-vence');
+  if(!vencen.length){el.innerHTML='<div class="empty text-sm">Sin vencimientos próximos ✓</div>';return;}
+  el.innerHTML=vencen.slice(0,6).map(r=>{
+    const s=getSoporte(r.soporteId);
+    const finProx=r.rangos.reduce((m,rg)=>rg.hasta>=t&&(!m||rg.hasta<m)?rg.hasta:m,null);
+    const dias=finProx?Math.round((parseDate(finProx)-parseDate(t))/86400000):0;
+    return`<div class="flex items-center justify-between mb-8 card-sm">
+      <div>
+        <div class="font-500 text-sm">${r.cliente}</div>
+        <div class="text-xs text-faint">${s?s.name:'—'} · ${r.orden}</div>
+      </div>
+      <span class="badge ${dias<=7?'badge-red':'badge-amber'}">en ${dias}d</span>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// CALENDARIO MINI
+// ============================================================
+const MNAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DNAMES=['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+function calMiniPrev(){state.calMiniMonth--;if(state.calMiniMonth<0){state.calMiniMonth=11;state.calMiniYear--;}renderCalMini();}
+function calMiniNext(){state.calMiniMonth++;if(state.calMiniMonth>11){state.calMiniMonth=0;state.calMiniYear++;}renderCalMini();}
+
+function renderCalMini(){
+  const y=state.calMiniYear,m=state.calMiniMonth;
+  document.getElementById('cal-mini-title').textContent=`${MNAMES[m]} ${y}`;
+  document.getElementById('cal-mini-heads').innerHTML=DNAMES.map(d=>`<div class="cal-mini-head">${d}</div>`).join('');
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  const prevDays=new Date(y,m,0).getDate();
+  const tod=today();
+  let cells=[];
+  for(let i=first-1;i>=0;i--)cells.push({d:prevDays-i,cur:false});
+  for(let d=1;d<=days;d++)cells.push({d,cur:true});
+  while(cells.length%7)cells.push({d:cells.length-days-first+1,cur:false});
+
+  document.getElementById('cal-mini-days').innerHTML=cells.map(c=>{
+    if(!c.cur)return`<div class="cal-mini-day other">${c.d}</div>`;
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
+    const ocu=state.soportes.some(s=>disponibleEnFecha(s.id,ds)<s.cap);
+    const full=state.soportes.some(s=>disponibleEnFecha(s.id,ds)===0);
+    const isToday=ds===tod;
+    const cls=[`cal-mini-day`,isToday?'today':'',full?'full':ocu?'has-res':''].join(' ');
+    return`<div class="${cls}">${c.d}</div>`;
+  }).join('');
+}
+
+// ============================================================
+// GANTT
+// ============================================================
+// ============================================================
+// DISPONIBILIDAD ANUAL
+// ============================================================
+const MESES_NOMBRES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_CORTOS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function renderDisponibilidadAnual(){
+  const catId=document.getElementById('da-cat')?.value||'';
+  const tod=today();
+  const year=2026;
+
+  console.log('[DA] soportes:',state.soportes.length,'reservas:',state.reservas.length);
+
+  // Panel de debug visible
+  const dbg=document.getElementById('da-debug');
+  if(dbg){
+    const cats=[...new Set(state.soportes.map(s=>s.catId))];
+    dbg.style.display='block';
+    dbg.innerHTML=`Soportes: ${state.soportes.length} | Reservas: ${state.reservas.length} | CatIds: ${cats.join(', ')||'ninguno'} | Conectado: ${state.sheetConnected}
+    <button class="btn btn-sm" style="margin-left:8px;font-size:10px" onclick="loadFromSheet()">↺ Recargar</button>`;
+  }
+
+  if(!state.soportes.length){
+    document.getElementById('da-month-nav').innerHTML='';
+    document.getElementById('da-content').innerHTML=`
+      <div style="padding:60px 20px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">📋</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:8px;color:var(--text)">Sin datos cargados</div>
+        <div style="font-size:13px;color:var(--text2)">Conectá Google Sheets o usá el modo demo.</div>
+        <div style="margin-top:16px;display:flex;gap:8px;justify-content:center">
+          <button class="btn btn-primary" onclick="loadFromSheet()">Reconectar Sheets</button>
+          <button class="btn" onclick="loadDemoData();renderDisponibilidadAnual()">Ver demo</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const soportes=catId ? state.soportes.filter(s=>s.catId===catId) : state.soportes;
+  console.log('[DA] a renderizar:',soportes.length,'con catId:',catId||'todos');
+
+  document.getElementById('da-month-nav').innerHTML=MESES_CORTOS.map((m,i)=>`
+    <button class="btn btn-sm" onclick="scrollToMes(${i})" id="da-btn-${i}" style="min-width:46px;font-size:12px">${m}</button>
+  `).join('');
+
+  const allDays=[];
+  for(let m=0;m<12;m++){
+    const dIM=new Date(year,m+1,0).getDate();
+    const ms=String(m+1).padStart(2,'0');
+    for(let d=1;d<=dIM;d++){
+      allDays.push({date:`${year}-${ms}-${String(d).padStart(2,'0')}`,day:d,month:m,dIM,isFirst:d===1});
+    }
+  }
+
+  function makeMonthRuler(){
+    let h='<div style="display:flex;gap:0;border-bottom:1px solid var(--border2)">';
+    for(let m=0;m<12;m++){
+      const dIM=new Date(year,m+1,0).getDate();
+      const isCur=tod.slice(0,7)===`${year}-${String(m+1).padStart(2,'0')}`;
+      h+=`<div id="da-mes-anchor-${m}" style="flex:${dIM};min-width:${dIM*7}px;padding:5px 6px 4px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;font-weight:${isCur?600:400};color:${isCur?'var(--accent)':'var(--text3)'};border-left:1px solid var(--border);white-space:nowrap;overflow:hidden">${MESES_CORTOS[m]}</div>`;
+    }
+    return h+'</div>';
+  }
+
+  let html='';
+  let lastCat='';
+
+  soportes.forEach(s=>{
+    try{
+    const cat=getCat(s.catId)||{color:'#888780',name:s.catName||s.catId||'Sin cat',id:s.catId};
+
+    if(s.catId!==lastCat){
+      lastCat=s.catId;
+      html+=`<div style="display:flex;align-items:center;gap:0;padding:18px 0 8px;border-top:1px solid var(--border2);margin-top:4px">
+        <div style="width:220px;min-width:220px;display:flex;align-items:center;gap:8px;padding-right:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${cat.color}"></div>
+          <span style="font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--text)">${cat.name}</span>
+        </div>
+        <div style="flex:1">${makeMonthRuler()}</div>
+        <div style="width:90px;min-width:90px"></div>
+      </div>`;
+    }
+
+    const cap=Number(s.cap)||0;
+    const tocuHoy=ocupadosEnFecha(s.id,tod);
+    const dispHoy=Math.max(0,cap-tocuHoy);
+    const pctHoy=cap?Math.round(tocuHoy/cap*100):0;
+    const sc=cap&&dispHoy===0?'var(--red)':pctHoy>70?'var(--amber)':'var(--accent)';
+    const reservasS=state.reservas.filter(r=>r.soporteId===s.id);
+
+    let cells='';
+    allDays.forEach(({date,day,month,isFirst})=>{
+      const ocu=ocupadosEnFecha(s.id,date);
+      const pct=cap?Math.min(100,Math.round(ocu/cap*100)):0;
+      const isToday=date===tod;
+      const dow=new Date(date).getDay();
+      const isWend=dow===0||dow===6;
+      let bg,op;
+      if(pct>=100){bg='var(--red)';op='0.85';}
+      else if(pct>=80){bg='var(--amber)';op='0.80';}
+      else if(pct>=50){bg='var(--amber)';op='0.45';}
+      else if(pct>0){bg='var(--accent)';op=(0.2+pct/100*0.5).toFixed(2);}
+      else{bg=isWend?'var(--bg3)':'transparent';op='1';}
+      cells+=`<div title="${String(day).padStart(2,'0')}/${String(month+1).padStart(2,'0')}: ${ocu}${cap?'/'+cap:''} ocu${pct?' ('+pct+'%)':''}"
+        style="flex:1;min-width:7px;height:28px;background:${bg};opacity:${op};${isToday?'outline:2px solid var(--accent);outline-offset:-1px;z-index:1;position:relative;':''}${isFirst?'border-left:1px solid var(--border2);':''}"></div>`;
+    });
+
+    html+=`<div style="border-bottom:0.5px solid var(--border)">
+      <div onclick="toggleSoporte('${s.id}')" style="display:flex;align-items:center;cursor:pointer;transition:background .12s"
+        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <div style="width:220px;min-width:220px;display:flex;align-items:center;gap:8px;padding:8px 12px 8px 0">
+          <span id="da-arrow-${s.id}" style="font-size:9px;color:var(--text3);transition:transform .2s;display:inline-block;flex-shrink:0">▶</span>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+            <div style="font-size:10px;color:${sc}">${cap?`${dispHoy}/${cap} libres`:'sin cap'} · ${reservasS.length} campaña${reservasS.length!==1?'s':''}</div>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden"><div style="display:flex">${cells}</div></div>
+        <div style="width:90px;min-width:90px;padding-left:10px">
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openReservaForSoporte('${s.id}')" style="font-size:11px;width:100%">+ Reservar</button>
+        </div>
+      </div>
+      <div id="da-clientes-${s.id}" style="display:none;background:var(--bg2);border-top:0.5px solid var(--border)">
+        ${(()=>{try{return renderClientesDesglose(s,cat,allDays,year);}catch(e){return `<div style="padding:10px;color:var(--red);font-size:11px">Error: ${e.message}</div>`;}})()}
+      </div>
+    </div>`;
+    }catch(e){console.error('[DA] Error soporte',s.id,e);html+=`<div style="padding:6px 12px;font-size:11px;color:var(--red)">Error en soporte "${s.name}": ${e.message}</div>`;}
+  });
+
+  const minW=220+allDays.length*7+90;
+  document.getElementById('da-content').innerHTML=`
+    <div style="overflow-x:auto;padding-bottom:8px">
+      <div style="min-width:${minW}px">${html||`<div style="padding:32px;text-align:center;color:var(--text3)">Sin soportes para este filtro</div>`}</div>
+    </div>`;
+
+  const curM=new Date().getMonth();
+  const btn=document.getElementById(`da-btn-${curM}`);
+  if(btn){btn.style.borderColor='var(--accent)';btn.style.color='var(--accent)';}
+}
+function renderClientesDesglose(s,cat,allDays,year){
+  const tod=today();
+  const reservasS=state.reservas.filter(r=>r.soporteId===s.id);
+  if(!reservasS.length) return `<div style="padding:10px 14px 10px 32px;font-size:12px;color:var(--text3);font-style:italic">Sin campañas registradas</div>`;
+
+  return reservasS.map(r=>{
+    let clienteCells='';
+    allDays.forEach(({date,month,isFirst})=>{
+      const activo=reservaActivaEnFecha(r,date);
+      const dow=new Date(date).getDay();
+      const isWend=dow===0||dow===6;
+      const isToday=date===tod;
+      clienteCells+=`<div title="${activo?r.cliente+' activo':date}"
+        style="flex:1;min-width:7px;height:20px;background:${activo?cat.color:isWend?'var(--bg3)':'transparent'};opacity:${activo?'0.75':'1'};${isToday?'outline:2px solid var(--accent);outline-offset:-1px;position:relative;z-index:1;':''}${isFirst?'border-left:1px solid var(--border2);':''}"></div>`;
+    });
+
+    return`<div style="display:flex;align-items:center;border-bottom:0.5px solid var(--border);padding:2px 0">
+      <div style="width:220px;min-width:220px;display:flex;align-items:center;gap:8px;padding:4px 12px 4px 24px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${cat.color};flex-shrink:0"></div>
+        <div style="min-width:0">
+          <div style="font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.cliente}</div>
+          <div style="font-size:10px;color:var(--text3)">${r.cant} ${s.unit||'esp.'} · ${r.rangos.map(rg=>`${fmtDate(normDate(rg.desde))}→${fmtDate(normDate(rg.hasta))}`).join(' / ')}</div>
+        </div>
+      </div>
+      <div style="flex:1;overflow:hidden"><div style="display:flex">${clienteCells}</div></div>
+      <div style="width:90px;min-width:90px;padding-left:10px">
+        <button class="btn btn-sm btn-icon" onclick="editReserva('${r.id}')" style="font-size:10px;width:100%;justify-content:center">✏️ editar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSoporte(sId){
+  const panel=document.getElementById(`da-clientes-${sId}`);
+  const arrow=document.getElementById(`da-arrow-${sId}`);
+  if(!panel)return;
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  if(arrow)arrow.style.transform=open?'rotate(90deg)':'';
+}
+
+function scrollToMes(m){
+  const el=document.getElementById(`da-mes-anchor-${m}`);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  MESES_CORTOS.forEach((_,i)=>{
+    const btn=document.getElementById(`da-btn-${i}`);
+    if(btn){btn.style.borderColor='';btn.style.color='';}
+  });
+  const btn=document.getElementById(`da-btn-${m}`);
+  if(btn){btn.style.borderColor='var(--accent)';btn.style.color='var(--accent)';}
+}
+
+// ============================================================
+// CONSULTA RÁPIDA
+// ============================================================
+function renderConsultaRapida(){
+  const desde=document.getElementById('cq-desde').value;
+  const hasta=document.getElementById('cq-hasta').value;
+  const catId=document.getElementById('cq-cat').value;
+  if(!desde||!hasta){notify('Seleccioná un período','error');return;}
+
+  const soportes=getSoportesBycat(catId);
+  const results=soportes.map(s=>{
+    let minDisp=s.cap||0;
+    const d=parseDate(desde),h=parseDate(hasta);
+    for(let dt=new Date(d);dt<=h;dt.setDate(dt.getDate()+1)){
+      const ds=dt.toISOString().slice(0,10);
+      const disp=Math.max(0,(s.cap||0)-ocupadosEnFecha(s.id,ds));
+      if(disp<minDisp)minDisp=disp;
+    }
+    const pct=s.cap?Math.round((s.cap-minDisp)/s.cap*100):0;
+    return{s,minDisp,pct};
+  }).sort((a,b)=>b.minDisp-a.minDisp);
+
+  const el=document.getElementById('cq-results');
+  if(!results.length){el.innerHTML='<div class="empty">Sin soportes</div>';return;}
+
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+    ${results.map(({s,minDisp,pct})=>{
+      const cat=getCat(s.catId);
+      const lleno=minDisp===0;
+      const casi=pct>=70;
+      const bc=lleno?'var(--red)':casi?'var(--amber)':'var(--accent)';
+      const bgc=lleno?'var(--red-dim)':casi?'var(--amber-dim)':'var(--accent-dim)';
+      const label=lleno?'Lleno':casi?'Casi lleno':'Disponible';
+      const badgeCls=lleno?'badge-red':casi?'badge-amber':'badge-green';
+      return`<div style="background:var(--bg2);border:0.5px solid var(--border);border-left:3px solid ${bc};border-radius:var(--radius);padding:14px 16px;${lleno?'opacity:.65':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${s.name}</div>
+          <span class="badge ${badgeCls}">${label}</span>
+        </div>
+        <div style="font-size:10px;color:${cat.color};margin-bottom:10px">${cat.name}</div>
+        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${bc};letter-spacing:-1px;line-height:1">${minDisp}</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:10px">${s.unit||'espacios'} disponibles (mínimo del período)</div>
+        <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${pct}%;background:${bc};border-radius:2px;transition:width .5s"></div>
+        </div>
+        ${!lleno?`<button class="btn btn-sm btn-primary w-full" onclick="openReservaForSoporte('${s.id}')">+ Reservar</button>`:'<div style="font-size:11px;color:var(--text3);text-align:center">Sin disponibilidad en el período</div>'}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ============================================================
+// GANTT (mantenido por compatibilidad, ya no se usa en nav)
+// ============================================================
+function renderGantt(){
+  const catId=document.getElementById('da-cat')?.value||'';
+  const month=parseInt(document.getElementById('gantt-month').value);
+  const year=2026;
+  const days=new Date(year,month+1,0).getDate();
+  const tod=today();
+  const mesStr=String(month+1).padStart(2,'0');
+  const mesDesde=`${year}-${mesStr}-01`;
+  const mesFin=`${year}-${mesStr}-${String(days).padStart(2,'0')}`;
+  const soportes=getSoportesBycat(catId);
+
+  // Paleta de colores por cliente (consistente dentro del mes)
+  const clienteColors={};
+  const palette=['#00d4a0','#4d9fff','#f5a623','#a78bfa','#ff5c5c','#e879f9','#34d399','#fb923c','#60a5fa','#f472b6','#facc15','#38bdf8'];
+  let colorIdx=0;
+  function getClientColor(cli){
+    if(!clienteColors[cli])clienteColors[cli]=palette[colorIdx++%palette.length];
+    return clienteColors[cli];
+  }
+
+  // Pre-asignar colores en orden de aparición
+  soportes.forEach(s=>{
+    state.reservas.filter(r=>r.soporteId===s.id).forEach(r=>getClientColor(r.cliente));
+  });
+
+  // Header días
+  let daysHtml='';
+  for(let d=1;d<=days;d++){
+    const ds=`${year}-${mesStr}-${String(d).padStart(2,'0')}`;
+    const isW=new Date(ds).getDay();
+    const wend=isW===0||isW===6;
+    daysHtml+=`<div class="gantt-day-head${ds===tod?' today':''}${wend?' wend':''}">${d}</div>`;
+  }
+
+  // Células base para una fila
+  function makeCells(highlightToday){
+    let h='';
+    for(let d=1;d<=days;d++){
+      const ds=`${year}-${mesStr}-${String(d).padStart(2,'0')}`;
+      const isW=new Date(ds).getDay();
+      const wend=isW===0||isW===6;
+      h+=`<div class="gantt-cell${ds===tod?' today-col':''}${wend?' wend-col':''}"></div>`;
+    }
+    return h;
+  }
+
+  // Bloques de una reserva (puede tener varios rangos → varios segmentos)
+  function makeBlocks(r,color){
+    let h='';
+    r.rangos.forEach(rg=>{
+      // Normalizar fechas: quitar espacios y validar formato
+      const rgDesde=(rg.desde||'').trim().slice(0,10);
+      const rgHasta=(rg.hasta||'').trim().slice(0,10);
+      if(!rgDesde||!rgHasta) return;
+      if(rgHasta<mesDesde||rgDesde>mesFin)return;
+
+      // Clampear al mes visible
+      const efectivoDesde=rgDesde<mesDesde?mesDesde:rgDesde;
+      const efectivoHasta=rgHasta>mesFin?mesFin:rgHasta;
+
+      // Calcular día dentro del mes (1-based)
+      const startD=parseInt(efectivoDesde.slice(8),10);
+      const endD=parseInt(efectivoHasta.slice(8),10);
+      if(isNaN(startD)||isNaN(endD)||startD>endD)return;
+
+      const left=((startD-1)/days*100).toFixed(3)+'%';
+      const width=((endD-startD+1)/days*100).toFixed(3)+'%';
+      const interrumpe=r.rangos.length>1;
+      const s=getSoporte(r.soporteId);
+      h+=`<div class="gantt-block tooltip" style="left:${left};width:${width};background:${color}25;color:${color};border:1px solid ${color}55;">
+        <span style="overflow:hidden;text-overflow:ellipsis">${r.cliente}${interrumpe?' ···':''}</span>
+        <span class="tooltip-text">${r.cliente}<br>${r.orden||'—'} · ${r.cant} ${s?.unit||''}<br>${fmtDate(rgDesde)} → ${fmtDate(rgHasta)}${interrumpe?'<br><i>Reserva con interrupciones</i>':''}</span>
+      </div>`;
+    });
+    return h;
+  }
+
+  // Fila de ocupación acumulada (barra día a día)
+  function makeOcupRow(s,cat){
+    let cellsHtml='';
+    const capReal=s.cap||0;
+    const dayData=[];
+    for(let d=1;d<=days;d++){
+      const ds=`${year}-${mesStr}-${String(d).padStart(2,'0')}`;
+      const ocu=ocupadosEnFecha(s.id,ds);
+      const pct=capReal>0?Math.min(100,Math.round(ocu/capReal*100)):0;
+      dayData.push({ocu,pct,ds});
+    }
+    dayData.forEach(({ocu,pct,ds})=>{
+      const isW=new Date(ds).getDay();const wend=isW===0||isW===6;
+      const bg=pct>=100?'#ff5c5c':pct>=75?'#f5a623':pct>0?cat.color:'transparent';
+      const opacity=pct>0?(0.2+pct/100*0.7).toFixed(2):'0';
+      cellsHtml+=`<div class="gantt-cell${ds===tod?' today-col':''}${wend?' wend-col':''} tooltip" style="background:${bg};opacity:${opacity};cursor:default">
+        <span class="tooltip-text">${ds.slice(8)}/${ds.slice(5,7)}: ${ocu}${capReal?'/'+capReal:''} ocupados${capReal?' ('+pct+'%)':''}</span>
+      </div>`;
+    });
+    return`<div class="gantt-row gantt-row-ocu">
+      <div class="gantt-row-label" style="padding-left:20px">
+        <div class="gantt-row-name" style="font-size:10px;color:var(--text3);font-style:italic">ocupación diaria</div>
+        <div class="gantt-row-cap">${capReal?capReal+' '+s.unit+' totales':'capacidad no definida'}</div>
+      </div>
+      <div class="gantt-row-days" style="position:relative">${cellsHtml}</div>
+    </div>`;
+  }
+
+  let html=`<div class="gantt-grid">
+    <div class="gantt-header">
+      <div class="gantt-label-col">Soporte / Cliente</div>
+      <div class="gantt-days">${daysHtml}</div>
+    </div>`;
+
+  let lastCat='';
+  soportes.forEach(s=>{
+    const cat=getCat(s.catId);
+    if(s.catId!==lastCat){
+      lastCat=s.catId;
+      html+=`<div class="gantt-section" style="border-left:3px solid ${cat.color}">${cat.name}</div>`;
+    }
+
+    const reservasS=state.reservas.filter(r=>r.soporteId===s.id&&r.rangos.some(rg=>rg.hasta>=mesDesde&&rg.desde<=mesFin));
+
+    // Fila encabezado del soporte (resumen)
+    const ocuHoy=ocupadosEnFecha(s.id,tod);
+    const dispHoy=Math.max(0,s.cap-ocuHoy);
+    const pctHoy=Math.round(ocuHoy/s.cap*100);
+    const statusColor=dispHoy===0?'var(--red)':pctHoy>70?'var(--amber)':'var(--accent)';
+    html+=`<div class="gantt-row gantt-row-soporte" style="background:var(--bg3)">
+      <div class="gantt-row-label" style="flex-direction:row;align-items:center;gap:10px;padding:8px 14px">
+        <div>
+          <div class="gantt-row-name" style="font-size:13px">${s.name}</div>
+          <div class="gantt-row-cap">${reservasS.length} campaña${reservasS.length!==1?'s':''} · <span style="color:${statusColor}">${dispHoy} libre${dispHoy!==1?'s':''} hoy</span></div>
+        </div>
+      </div>
+      <div class="gantt-row-days" style="position:relative">${makeCells()}</div>
+    </div>`;
+
+    if(reservasS.length===0){
+      // Sin campañas: fila vacía con mensaje
+      html+=`<div class="gantt-row" style="min-height:32px">
+        <div class="gantt-row-label" style="padding-left:20px"><div class="gantt-row-cap" style="font-style:italic">Sin campañas este mes</div></div>
+        <div class="gantt-row-days">${makeCells()}</div>
+      </div>`;
+    }else{
+      // Una fila por reserva (cliente)
+      reservasS.forEach(r=>{
+        const color=getClientColor(r.cliente);
+        const tieneInterrupcion=r.rangos.length>1;
+        html+=`<div class="gantt-row gantt-row-cliente">
+          <div class="gantt-row-label" style="padding-left:20px">
+            <div class="flex items-center gap-8">
+              <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+              <div>
+                <div class="gantt-row-name" style="font-size:12px">${r.cliente}</div>
+                <div class="gantt-row-cap">${r.cant} ${s.unit} · ${r.orden}${tieneInterrupcion?' · <span style="color:var(--amber)">interrumpida</span>':''}</div>
+              </div>
+            </div>
+          </div>
+          <div class="gantt-row-days" style="position:relative">
+            ${makeCells()}
+            ${makeBlocks(r,color)}
+          </div>
+        </div>`;
+      });
+    }
+
+    // Fila de ocupación acumulada al pie del soporte
+    html+=makeOcupRow(s,cat);
+  });
+
+  html+=`</div>`;
+  document.getElementById('gantt-container').innerHTML=html;
+}
+
+// ============================================================
+// RESERVAS
+// ============================================================
+function renderReservas(){
+  const search=document.getElementById('res-search').value.toLowerCase();
+  const catId=document.getElementById('res-cat').value;
+  const estado=document.getElementById('res-estado').value;
+  const t=today();const limit=addDays(t,30);
+
+  // Update cat select options
+  const rcat=document.getElementById('res-cat');
+  const curCat=rcat.value;
+  rcat.innerHTML=`<option value="">Todas las categorías</option>`+CATS.map(c=>`<option value="${c.id}"${c.id===curCat?' selected':''}>${c.name}</option>`).join('');
+
+  const filtered=state.reservas.filter(r=>{
+    if(search&&!r.cliente.toLowerCase().includes(search)&&!r.orden.toLowerCase().includes(search))return false;
+    const s=getSoporte(r.soporteId);
+    if(catId&&s&&s.catId!==catId)return false;
+    if(estado){
+      const activo=r.rangos.some(rg=>t>=rg.desde&&t<=rg.hasta);
+      const futuro=r.rangos.some(rg=>t<rg.desde);
+      const vence=r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit);
+      if(estado==='activa'&&!activo)return false;
+      if(estado==='vence'&&!vence)return false;
+      if(estado==='vencida'&&(activo||futuro))return false;
+    }
+    return true;
+  });
+
+  const tbody=document.getElementById('tbody-reservas');
+  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div>Sin reservas en ese filtro</div></td></tr>`;return;}
+
+  tbody.innerHTML=filtered.map(r=>{
+    const s=getSoporte(r.soporteId);
+    const cat=s?getCat(s.catId):null;
+    const periodStr=r.rangos.map(rg=>`${fmtDate(rg.desde)} → ${fmtDate(rg.hasta)}`).join('<br>');
+    return`<tr>
+      <td class="td-mono">${r.orden}</td>
+      <td class="td-main">${r.cliente}</td>
+      <td>${s?`<div>${s.name}</div><div class="text-xs" style="color:${cat?.color}">${cat?.name||''}</div>`:'—'}</td>
+      <td style="font-size:11px;line-height:1.6">${periodStr}</td>
+      <td>${r.cant} ${s?.unit||''}</td>
+      <td class="text-mono">${fmtMoney(r.valor)}</td>
+      <td>${statusBadge(r)}</td>
+      <td>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-icon" onclick="editReserva('${r.id}')" title="Editar">✏️</button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteReserva('${r.id}')" title="Eliminar">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// MODAL RESERVA
+// ============================================================
+function initReservaModal(id){
+  state.editingReservaId=id||null;
+  document.getElementById('modal-reserva-title').textContent=id?'Editar reserva':'Nueva reserva';
+  const catOpts=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('r-cat').innerHTML=`<option value="">— elegir —</option>`+catOpts;
+
+  if(id){
+    const r=state.reservas.find(x=>x.id===id);if(!r)return;
+    document.getElementById('r-cliente').value=r.cliente;
+    document.getElementById('r-orden').value=r.orden;
+    document.getElementById('r-cant').value=r.cant;
+    document.getElementById('r-valor').value=r.valor||'';
+    document.getElementById('r-notas').value=r.notas||'';
+    document.getElementById('r-cat').value=getSoporte(r.soporteId)?.catId||'';
+    updateRSubcats();
+    setTimeout(()=>{document.getElementById('r-soporte').value=r.soporteId;},50);
+    document.getElementById('r-ranges').innerHTML='';
+    r.rangos.forEach(rg=>addRange(rg.desde,rg.hasta));
+  }else{
+    document.getElementById('r-cliente').value='';
+    document.getElementById('r-orden').value='ORD-'+String(Date.now()).slice(-5);
+    document.getElementById('r-cant').value=1;
+    document.getElementById('r-valor').value='';
+    document.getElementById('r-notas').value='';
+    document.getElementById('r-ranges').innerHTML='';
+    addRange(today(),addDays(today(),30));
+    updateRSubcats();
+  }
+}
+
+function editReserva(id){initReservaModal(id);openModal('modal-reserva');}
+
+function updateRSubcats(){
+  const catId=document.getElementById('r-cat').value;
+  const sel=document.getElementById('r-soporte');
+  sel.innerHTML=`<option value="">— elegir —</option>`+
+    getSoportesBycat(catId).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function addRange(desde,hasta){
+  const container=document.getElementById('r-ranges');
+  const div=document.createElement('div');
+  div.className='form-row cols-2 mb-8';
+  div.style.position='relative';
+  div.innerHTML=`
+    <div><label>Desde</label><input type="date" class="r-desde" value="${desde||today()}"></div>
+    <div><label>Hasta</label><input type="date" class="r-hasta" value="${hasta||addDays(today(),30)}"></div>
+    <button style="position:absolute;right:-28px;top:20px" class="btn btn-sm btn-icon btn-danger" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+}
+
+function saveReserva(){
+  const cliente=document.getElementById('r-cliente').value.trim();
+  const orden=document.getElementById('r-orden').value.trim();
+  const soporteId=document.getElementById('r-soporte').value;
+  const cant=parseInt(document.getElementById('r-cant').value)||1;
+  const valor=parseFloat(document.getElementById('r-valor').value)||0;
+  const notas=document.getElementById('r-notas').value.trim();
+
+  if(!cliente||!soporteId){notify('Completá cliente y soporte','error');return;}
+
+  const rangos=[...document.querySelectorAll('#r-ranges .form-row')].map(row=>({
+    desde:row.querySelector('.r-desde').value,
+    hasta:row.querySelector('.r-hasta').value,
+  })).filter(r=>r.desde&&r.hasta);
+
+  if(!rangos.length){notify('Agregá al menos un período','error');return;}
+
+  const s=getSoporte(soporteId);
+  if(state.editingReservaId){
+    const r=state.reservas.find(x=>x.id===state.editingReservaId);
+    if(r){
+      Object.assign(r,{cliente,orden,soporteId,cant,valor,notas,rangos,soporteNombre:s?s.name:''});
+      pushEditToSheet(r);
+    }
+    notify('Reserva actualizada','success');
+  }else{
+    const nueva={id:randId(),cliente,orden,soporteId,cant,valor,notas,rangos,fuente:'contratos',soporteNombre:s?s.name:''};
+    state.reservas.push(nueva);
+    pushReservaToSheet(nueva);
+    notify('Reserva creada','success');
+  }
+  closeModal('modal-reserva');
+  renderReservas();updateVenceBadge();renderAlertas();
+}
+
+function deleteReserva(id){
+  const r=state.reservas.find(x=>x.id===id);if(!r)return;
+  const esHistorica=r.fuente==='hoja';
+  document.getElementById('modal-confirm-title').textContent='Eliminar reserva';
+  document.getElementById('modal-confirm-msg').textContent=esHistorica
+    ? `"${r.cliente}" es una reserva histórica de la planilla. Se eliminará de la app pero NO de las hojas originales. ¿Continuás?`
+    : `¿Eliminar la reserva de ${r.cliente} (${r.orden}) de Contratos?`;
+  document.getElementById('modal-confirm-btn').onclick=()=>{
+    if(!esHistorica) pushDeleteToSheet(r);
+    state.reservas=state.reservas.filter(x=>x.id!==id);
+    closeModal('modal-confirm');renderReservas();notify('Reserva eliminada');
+  };
+  openModal('modal-confirm');
+}
+
+// ============================================================
+// SCANNER IA — versión inteligente
+// ============================================================
+function setScanTab(tab){
+  document.getElementById('scan-panel-file').style.display=tab==='file'?'block':'none';
+  document.getElementById('scan-panel-text').style.display=tab==='text'?'block':'none';
+  document.getElementById('scan-tab-file').style.borderBottomColor=tab==='file'?'var(--accent)':'transparent';
+  document.getElementById('scan-tab-file').style.color=tab==='file'?'var(--accent)':'var(--text2)';
+  document.getElementById('scan-tab-file').style.fontWeight=tab==='file'?'500':'400';
+  document.getElementById('scan-tab-text').style.borderBottomColor=tab==='text'?'var(--accent)':'transparent';
+  document.getElementById('scan-tab-text').style.color=tab==='text'?'var(--accent)':'var(--text2)';
+  document.getElementById('scan-tab-text').style.fontWeight=tab==='text'?'500':'400';
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);
+}
+
+// Construir prompt con contexto completo de soportes reales
+function buildPrompt(){
+  const today_str = today();
+  const soportesList = state.soportes.map(s=>`${s.name} (${getCat(s.catId)?.name||s.catId})`).join('\n');
+  return `Sos un asistente especializado en extraer datos de órdenes publicitarias de una empresa uruguaya llamada Movimagen.
+
+HOY ES: ${today_str}
+
+SOPORTES DISPONIBLES EN EL SISTEMA (usá estos nombres exactos o el más parecido):
+${soportesList}
+
+ALIAS CONOCIDOS:
+- "Pantalla curva" o "pantalla Rivera" o "Rivera y Herrera" → "RIVERA Y LAH (Rivera 3499)" o "Av. Italia y Ricaldoni"
+- "Lateral" sin especificar → "Lateral Extra"
+- "Trasero" → "Trasero o Luneta"
+- "Shopping" + ciudad → buscar en Circ. Shoppings
+
+INSTRUCCIONES:
+- Si dice "X semanas desde fecha Y" → fecha_fin = Y + X*7 días
+- Si dice "X semanas" sin fecha → usar hoy como inicio
+- Extraer TODOS los soportes mencionados (puede haber varios)
+- Para propuestas con tabla → extraer cada línea como un ítem separado
+
+Respondé ÚNICAMENTE con este JSON (sin backticks, sin explicaciones):
+{
+  "orden": "número de orden, referencia o código",
+  "cliente": "nombre del cliente o marca",
+  "tipo_documento": "propuesta|orden_sistema|whatsapp|email|otro",
+  "items": [
+    {
+      "soporte_detectado": "nombre tal como aparece en el documento",
+      "soporte_id_sugerido": "nombre más parecido de la lista de soportes",
+      "cantidad": 1,
+      "fecha_inicio": "YYYY-MM-DD",
+      "fecha_fin": "YYYY-MM-DD",
+      "valor": 0,
+      "notas": "observaciones"
+    }
+  ]
+}
+
+Si hay un solo soporte, igual usar el array "items" con un elemento.
+Si no encontrás algún campo, usá string vacío o 0.`;
+}
+
+function showScanProgress(msg){
+  const area=document.getElementById('scan-result-area');
+  area.innerHTML=`<div class="ai-panel">
+    <div class="ai-label"><div class="ai-dot"></div>${msg}</div>
+    <div class="text-muted text-sm">Identificando soportes, fechas y cliente...</div>
+    <div class="ai-prog mt-8"><div class="ai-prog-fill" id="ai-prog" style="width:5%"></div></div>
+  </div>`;
+  let p=5;
+  return setInterval(()=>{
+    p=Math.min(88,p+(Math.random()*12));
+    const el=document.getElementById('ai-prog');
+    if(el)el.style.width=p+'%';
+  },300);
+}
+
+async function callAI(messages){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages})
+  });
+  const data=await res.json();
+  const txt=(data.content||[]).map(b=>b.text||'').join('');
+  try{ return JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+  catch(e){ return null; }
+}
+
+function handleFile(file){
+  if(!file)return;
+  const zone=document.getElementById('upload-zone');
+  zone.innerHTML=`<div class="upload-icon">✓</div><div class="upload-title">${file.name}</div><div class="upload-sub">${(file.size/1024).toFixed(0)} KB · Analizando...</div>`;
+  const iv=showScanProgress('IA analizando documento...');
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const b64=ev.target.result.split(',')[1];
+    const isImage=file.type.startsWith('image/');
+    try{
+      const prompt=buildPrompt();
+      const msgs=isImage
+        ?[{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:prompt}]}]
+        :[{role:'user',content:prompt+`\n\n[Archivo: ${file.name} — procesá como si fuera una orden publicitaria]`}];
+      const extracted=await callAI(msgs);
+      clearInterval(iv);
+      const el=document.getElementById('ai-prog');if(el)el.style.width='100%';
+      setTimeout(()=>showScanResults(extracted),300);
+    }catch(e){ clearInterval(iv); showScanResults(null); }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleTextScan(){
+  const text=document.getElementById('scan-text-input').value.trim();
+  if(!text){notify('Pegá algún texto primero','error');return;}
+  const iv=showScanProgress('IA analizando texto...');
+  try{
+    const prompt=buildPrompt()+`\n\nTEXTO A ANALIZAR:\n${text}`;
+    const extracted=await callAI([{role:'user',content:prompt}]);
+    clearInterval(iv);
+    const el=document.getElementById('ai-prog');if(el)el.style.width='100%';
+    setTimeout(()=>showScanResults(extracted),300);
+  }catch(e){ clearInterval(iv); showScanResults(null); }
+}
+
+// Match fuzzy de soporte por nombre
+function matchSoporte(nombreDetectado){
+  if(!nombreDetectado) return null;
+  const nl=nombreDetectado.toLowerCase().trim();
+  // Match exacto
+  let s=state.soportes.find(s=>s.name.toLowerCase()===nl);
+  if(s)return s;
+  // Match parcial
+  s=state.soportes.find(s=>s.name.toLowerCase().includes(nl)||nl.includes(s.name.toLowerCase()));
+  if(s)return s;
+  // Match por palabras clave
+  const words=nl.split(/\s+/).filter(w=>w.length>3);
+  s=state.soportes.find(s=>{
+    const sn=s.name.toLowerCase();
+    return words.some(w=>sn.includes(w));
+  });
+  return s||null;
+}
+
+function showScanResults(data){
+  const area=document.getElementById('scan-result-area');
+  if(!data||!data.items||!data.items.length){
+    area.innerHTML=`<div class="card" style="padding:32px;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+      <div class="font-500 mb-8">No se pudieron extraer datos</div>
+      <div class="text-muted text-sm mb-16">Probá con otro formato o cargá la reserva manualmente</div>
+      <button class="btn btn-primary" onclick="openModal('modal-reserva');initReservaModal()">Cargar manualmente</button>
+    </div>`;
+    return;
+  }
+
+  const catOpts=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+
+  // Para cada item detectado, hacer match de soporte
+  const itemsHtml=data.items.map((item,i)=>{
+    const matchedS=matchSoporte(item.soporte_id_sugerido||item.soporte_detectado);
+    const matchedCat=matchedS?getCat(matchedS.catId):null;
+    const confidence=matchedS?'match':'no-match';
+
+    // Opciones de soporte de la misma categoría primero, luego el resto
+    const sOpts=state.soportes.map(s=>{
+      const cat=getCat(s.catId);
+      return`<option value="${s.id}" ${matchedS&&s.id===matchedS.id?'selected':''}>[${cat?.name||s.catId}] ${s.name}</option>`;
+    }).join('');
+
+    return`<div class="card mb-12" style="border-left:3px solid ${confidence==='match'?'var(--accent)':'var(--amber)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:500;color:var(--text)">Ítem ${i+1} de ${data.items.length}</div>
+        <span class="badge ${confidence==='match'?'badge-green':'badge-amber'}">${confidence==='match'?'Soporte encontrado':'Verificar soporte'}</span>
+      </div>
+      ${item.soporte_detectado?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Detectado: "${item.soporte_detectado}" ${item.soporte_id_sugerido&&item.soporte_id_sugerido!==item.soporte_detectado?`→ "${item.soporte_id_sugerido}"`:''}</div>`:''}
+      <div class="form-row cols-2 mb-8">
+        <div><label>Cliente</label><input id="sc-cliente-${i}" value="${(data.cliente||'').replace(/"/g,'&quot;')}"></div>
+        <div><label>N° orden / ref.</label><input id="sc-orden-${i}" value="${(data.orden||'').replace(/"/g,'&quot;')}"></div>
+      </div>
+      <div class="form-row mb-8">
+        <div><label>Soporte ${confidence!=='match'?'<span style="color:var(--amber)">⚠ Verificar</span>':''}</label>
+          <select id="sc-soporte-${i}">${sOpts}</select>
+        </div>
+      </div>
+      <div class="form-row cols-3 mb-8">
+        <div><label>Cantidad</label><input id="sc-cant-${i}" type="number" min="1" value="${item.cantidad||1}"></div>
+        <div><label>Desde</label><input id="sc-desde-${i}" type="date" value="${item.fecha_inicio||today()}"></div>
+        <div><label>Hasta</label><input id="sc-hasta-${i}" type="date" value="${item.fecha_fin||addDays(today(),30)}"></div>
+      </div>
+      ${item.notas?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Nota: ${item.notas}</div>`:''}
+      <button class="btn btn-primary btn-sm w-full" onclick="saveScanItem(${i})">Guardar este ítem</button>
+    </div>`;
+  }).join('');
+
+  const tipoLabel={propuesta:'📋 Propuesta comercial',orden_sistema:'🖥 Orden de sistema',whatsapp:'💬 WhatsApp',email:'📧 Email',otro:'📄 Documento'}[data.tipo_documento]||'📄 Documento';
+
+  area.innerHTML=`
+    <div class="ai-panel mb-16">
+      <div class="ai-label" style="animation:none"><span style="color:var(--accent)">✓</span> Datos extraídos — ${tipoLabel}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">${data.items.length} ítem${data.items.length!==1?'s':''} detectado${data.items.length!==1?'s':''} · Revisá y guardá cada uno</div>
+    </div>
+    <div id="scan-items-container">${itemsHtml}</div>
+    <button class="btn w-full mt-8" onclick="resetScanner()">Cancelar / nueva orden</button>`;
+}
+
+function saveScanItem(i){
+  const cliente=document.getElementById(`sc-cliente-${i}`)?.value.trim();
+  const soporteId=document.getElementById(`sc-soporte-${i}`)?.value;
+  if(!cliente||!soporteId){notify('Completá cliente y soporte','error');return;}
+  const orden=document.getElementById(`sc-orden-${i}`)?.value||'ORD-'+String(Date.now()).slice(-5);
+  const cant=parseInt(document.getElementById(`sc-cant-${i}`)?.value)||1;
+  const desde=document.getElementById(`sc-desde-${i}`)?.value;
+  const hasta=document.getElementById(`sc-hasta-${i}`)?.value;
+  const s=getSoporte(soporteId);
+  const nueva={id:randId(),cliente,orden,soporteId,cant,valor:0,notas:'',fuente:'contratos',soporteNombre:s?s.name:'',rangos:[{desde,hasta}]};
+  state.reservas.push(nueva);
+  pushReservaToSheet(nueva);
+  notify(`Reserva de ${cliente} guardada ✓`,'success');
+  // Marcar el ítem como guardado
+  const btn=document.querySelector(`#scan-items-container .card:nth-child(${i+1}) button`);
+  if(btn){btn.textContent='✓ Guardado';btn.disabled=true;btn.style.opacity='.5';}
+  renderReservas();updateVenceBadge();
+}
+
+function resetScanner(){
+  const zone=document.getElementById('upload-zone');
+  if(zone)zone.innerHTML=`<div class="upload-icon">📄</div><div class="upload-title">Subí la orden aquí</div><div class="upload-sub">PDF, JPG, PNG — arrastrá o hacé click</div>`;
+  const fi=document.getElementById('file-in');if(fi)fi.value='';
+  const ti=document.getElementById('scan-text-input');if(ti)ti.value='';
+  document.getElementById('scan-result-area').innerHTML=`<div class="card" style="padding:40px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🤖</div>
+    <div class="font-500 mb-8">IA lista para analizar</div>
+    <div class="text-muted text-sm">Subí un documento o pegá el texto y la IA extraerá los datos automáticamente</div>
+  </div>`;
+}
+
+function updateSCSoportes(){
+  const catId=document.getElementById('sc-cat')?.value;
+  const sel=document.getElementById('sc-soporte');
+  if(sel)sel.innerHTML=`<option value="">— elegir —</option>`+
+    getSoportesBycat(catId).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function saveScanReserva(){
+  const cliente=document.getElementById('sc-cliente')?.value.trim();
+  const soporteId=document.getElementById('sc-soporte')?.value;
+  if(!cliente||!soporteId){notify('Completá cliente y soporte','error');return;}
+  const orden=document.getElementById('sc-orden')?.value;
+  const cant=parseInt(document.getElementById('sc-cant')?.value)||1;
+  const valor=parseFloat(document.getElementById('sc-valor')?.value)||0;
+  const desde=document.getElementById('sc-desde')?.value;
+  const hasta=document.getElementById('sc-hasta')?.value;
+  const notas=document.getElementById('sc-notas')?.value||'';
+  const s=getSoporte(soporteId);
+  const nueva={id:randId(),cliente,orden,soporteId,cant,valor,notas,fuente:'contratos',soporteNombre:s?s.name:'',rangos:[{desde,hasta}]};
+  state.reservas.push(nueva);
+  pushReservaToSheet(nueva);
+  notify('Reserva guardada correctamente','success');
+  resetScanner();renderReservas();
+}
+
+
+
+// ============================================================
+// GERENCIA
+// ============================================================
+let venceFilterVal=30;
+function setVenceFilter(d,btn){
+  venceFilterVal=d;
+  document.querySelectorAll('#page-dashboard-gerencia .btn-sm').forEach(b=>b.classList.remove('btn-primary'));
+  btn.classList.add('btn-primary');
+  renderVenceList();
+}
+
+function renderGerencia(){
+  const year=parseInt(document.getElementById('ger-year').value)||2026;
+  const t=today();
+
+  // Métricas
+  const activas=state.reservas.filter(r=>r.rangos.some(rg=>t>=rg.desde&&t<=rg.hasta)).length;
+  const totalValor=state.reservas.reduce((s,r)=>s+(r.valor||0),0);
+  const limit30=addDays(t,30);
+  const vence30=state.reservas.filter(r=>r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit30)).length;
+  const ocupPct=calcOcupacionGlobal(t);
+
+  document.getElementById('ger-metrics').innerHTML=`
+    <div class="metric green"><div class="metric-label">Campañas activas</div><div class="metric-value green">${activas}</div><div class="metric-delta">hoy</div></div>
+    <div class="metric blue"><div class="metric-label">Valor total en cartera</div><div class="metric-value blue">${fmtMoney(totalValor)}</div><div class="metric-delta">todas las reservas</div></div>
+    <div class="metric amber"><div class="metric-label">Vencen en 30 días</div><div class="metric-value amber">${vence30}</div><div class="metric-delta">renovaciones pendientes</div></div>
+    <div class="metric ${ocupPct>80?'red':ocupPct>50?'amber':'green'}"><div class="metric-label">Ocupación global</div><div class="metric-value ${ocupPct>80?'red':ocupPct>50?'amber':'green'}">${ocupPct}%</div><div class="metric-delta">promedio hoy</div></div>
+  `;
+
+  renderOcupBars();
+  renderRanking();
+  renderVenceList();
+  renderMonthChart(year);
+  renderIngresosChart(year);
+  renderAlertas();
+  renderGerAlertas();
+}
+
+function calcOcupacionGlobal(dateStr){
+  let totalCap=0,totalOcu=0;
+  state.soportes.forEach(s=>{
+    totalCap+=s.cap;totalOcu+=ocupadosEnFecha(s.id,dateStr);
+  });
+  return totalCap?Math.round(totalOcu/totalCap*100):0;
+}
+
+function renderOcupBars(){
+  const t=today();
+  const el=document.getElementById('ger-ocu-bars');
+  el.innerHTML=CATS.map(cat=>{
+    const sops=getSoportesBycat(cat.id);
+    const cap=sops.reduce((s,sp)=>s+sp.cap,0);
+    const ocu=sops.reduce((s,sp)=>s+ocupadosEnFecha(sp.id,t),0);
+    const pct=cap?Math.round(ocu/cap*100):0;
+    return`<div class="chart-bar-row">
+      <div class="chart-bar-label">${cat.name}</div>
+      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+      <div class="chart-bar-val">${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRanking(){
+  const byClient={};
+  state.reservas.forEach(r=>{
+    if(!byClient[r.cliente])byClient[r.cliente]={cant:0,valor:0,campanas:0};
+    byClient[r.cliente].cant+=r.cant;
+    byClient[r.cliente].valor+=r.valor||0;
+    byClient[r.cliente].campanas++;
+  });
+  const sorted=Object.entries(byClient).sort((a,b)=>b[1].valor-a[1].valor).slice(0,8);
+  const maxVal=sorted[0]?sorted[0][1].valor:1;
+  document.getElementById('ger-ranking').innerHTML=sorted.map(([cli,d],i)=>`
+    <div class="chart-bar-row">
+      <div class="chart-bar-label" style="font-size:11px">${i+1}. ${cli}</div>
+      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(d.valor/maxVal*100).toFixed(0)}%;background:var(--accent)"></div></div>
+      <div class="chart-bar-val">${fmtMoney(d.valor)}</div>
+    </div>`).join('');
+}
+
+function renderVenceList(){
+  const t=today();
+  const limit=addDays(t,venceFilterVal);
+  const list=state.reservas.filter(r=>r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit));
+  const el=document.getElementById('ger-vence-list');
+  if(!list.length){el.innerHTML=`<div class="empty text-sm">Sin vencimientos en ${venceFilterVal} días ✓</div>`;return;}
+  el.innerHTML=`<table><thead><tr><th>Cliente</th><th>Soporte</th><th>Vence</th><th>Valor</th></tr></thead><tbody>`+
+    list.map(r=>{
+      const s=getSoporte(r.soporteId);
+      const finProx=r.rangos.reduce((m,rg)=>rg.hasta>=t&&(!m||rg.hasta<m)?rg.hasta:m,null);
+      const dias=finProx?Math.round((parseDate(finProx)-parseDate(t))/86400000):0;
+      return`<tr><td class="td-main">${r.cliente}</td><td>${s?.name||'—'}</td>
+        <td><span class="badge ${dias<=7?'badge-red':'badge-amber'}">en ${dias}d</span></td>
+        <td class="text-mono">${fmtMoney(r.valor)}</td></tr>`;
+    }).join('')+`</tbody></table>`;
+}
+
+function renderMonthChart(year){
+  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const data=months.map((_,m)=>{
+    const mid=`${year}-${String(m+1).padStart(2,'0')}-15`;
+    return calcOcupacionGlobal(mid);
+  });
+  const ctx=document.getElementById('ger-chart-month');
+  if(chartsCreated.month){chartsCreated.month.destroy();}
+  chartsCreated.month=new Chart(ctx,{
+    type:'line',
+    data:{labels:months,datasets:[{label:'% Ocupación',data,borderColor:'#00d4a0',backgroundColor:'#00d4a015',tension:.4,fill:true,pointBackgroundColor:'#00d4a0',pointRadius:3}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{color:'#ffffff08'},ticks:{color:'#5a5856',callback:v=>v+'%'}},x:{grid:{color:'#ffffff08'},ticks:{color:'#5a5856'}}}}
+  });
+}
+
+function renderIngresosChart(year){
+  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const data=months.map((_,m)=>{
+    const mStr=String(m+1).padStart(2,'0');
+    const desde=`${year}-${mStr}-01`;
+    const hasta=`${year}-${mStr}-${String(new Date(year,m+1,0).getDate()).padStart(2,'0')}`;
+    return state.reservas.filter(r=>r.rangos.some(rg=>rg.desde<=hasta&&rg.hasta>=desde))
+      .reduce((s,r)=>s+(r.valor||0),0);
+  });
+  const ctx=document.getElementById('ger-chart-ingresos');
+  if(chartsCreated.ingresos){chartsCreated.ingresos.destroy();}
+  chartsCreated.ingresos=new Chart(ctx,{
+    type:'bar',
+    data:{labels:months,datasets:[{label:'Valor campañas',data,backgroundColor:'#4d9fff28',borderColor:'#4d9fff',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#ffffff08'},ticks:{color:'#5a5856',callback:v=>'$'+v.toLocaleString()}},x:{grid:{color:'#ffffff08'},ticks:{color:'#5a5856'}}}}
+  });
+}
+
+function renderGerAlertas(){
+  const t=today();
+  const alertas=[];
+
+  // Soportes 100% ocupados
+  state.soportes.forEach(s=>{
+    if(disponibleEnFecha(s.id,t)===0)
+      alertas.push({type:'red',msg:`<b>${s.name}</b> está al 100% de ocupación hoy`});
+  });
+
+  // Soportes con mucha disponibilidad
+  state.soportes.forEach(s=>{
+    const disp=disponibleEnFecha(s.id,t);
+    if(disp===s.cap&&s.cap>1)
+      alertas.push({type:'blue',msg:`<b>${s.name}</b> tiene toda su capacidad disponible (${s.cap} ${s.unit})`});
+  });
+
+  // Vencimientos en 7 días
+  const limit7=addDays(t,7);
+  state.reservas.filter(r=>r.rangos.some(rg=>rg.hasta>=t&&rg.hasta<=limit7)).forEach(r=>{
+    alertas.push({type:'amber',msg:`Campaña de <b>${r.cliente}</b> vence esta semana`});
+  });
+
+  const el=document.getElementById('ger-alertas');
+  if(!alertas.length){el.innerHTML='<div class="empty text-sm">Sin alertas activas ✓</div>';return;}
+  el.innerHTML=`<div style="display:grid;gap:8px">`+alertas.slice(0,8).map(a=>`
+    <div class="card-sm flex items-center gap-12" style="border-left:3px solid var(--${a.type})">
+      <div class="text-sm">${a.msg}</div>
+    </div>`).join('')+`</div>`;
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+function renderClientes(){
+  const search=document.getElementById('cli-search').value.toLowerCase();
+  const byClient={};
+  state.reservas.forEach(r=>{
+    if(!byClient[r.cliente])byClient[r.cliente]=[];
+    byClient[r.cliente].push(r);
+  });
+  const clientes=Object.entries(byClient).filter(([n])=>!search||n.toLowerCase().includes(search));
+  const el=document.getElementById('clientes-grid');
+  if(!clientes.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Sin clientes</div>';return;}
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">`+
+    clientes.map(([cli,ress])=>{
+      const total=ress.reduce((s,r)=>s+(r.valor||0),0);
+      const t=today();
+      const activas=ress.filter(r=>r.rangos.some(rg=>t>=rg.desde&&t<=rg.hasta)).length;
+      const cats=[...new Set(ress.map(r=>getCat(getSoporte(r.soporteId)?.catId)?.name).filter(Boolean))];
+      const initials=cli.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      return`<div class="card">
+        <div class="flex items-center gap-12 mb-12">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-dim2);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--accent);font-size:13px;flex-shrink:0">${initials}</div>
+          <div>
+            <div class="font-500">${cli}</div>
+            <div class="text-xs text-faint">${ress.length} reserva${ress.length!==1?'s':''} · ${fmtMoney(total)}</div>
+          </div>
+        </div>
+        <div class="flex gap-8 flex-wrap mb-12">
+          ${cats.map(c=>`<span class="badge badge-gray">${c}</span>`).join('')}
+        </div>
+        <div class="flex justify-between text-xs text-faint">
+          <span>${activas} campaña${activas!==1?'s':''} activa${activas!==1?'s':''}</span>
+          <button class="btn btn-sm" onclick="filtrarReservasPorCliente('${cli}')">Ver reservas →</button>
+        </div>
+      </div>`;
+    }).join('')+`</div>`;
+}
+
+function filtrarReservasPorCliente(cli){
+  showPage('reservas',document.querySelector('[onclick*="reservas"]'));
+  setTimeout(()=>{document.getElementById('res-search').value=cli;renderReservas();},100);
+}
+
+// ============================================================
+// SOPORTES
+// ============================================================
+function renderSoportes(){
+  const el=document.getElementById('soportes-grid');
+  const t=today();
+  el.innerHTML=CATS.map(cat=>{
+    const sops=getSoportesBycat(cat.id);
+    return`<div class="card mb-16">
+      <div class="sec-head mb-12">
+        <div class="flex items-center gap-8">
+          <div style="width:10px;height:10px;border-radius:50%;background:${cat.color}"></div>
+          <div class="sec-title">${cat.name}</div>
+          <span class="badge badge-gray">${sops.length} soportes</span>
+        </div>
+        <button class="btn btn-sm" onclick="initSoporteModal('${cat.id}')">+ Agregar</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Soporte</th><th>Capacidad</th><th>Ocupado hoy</th><th>Disponible hoy</th><th>Ocupación</th><th>Descripción</th><th></th></tr></thead>
+        <tbody>${sops.map(s=>{
+          const ocu=ocupadosEnFecha(s.id,t);
+          const disp=Math.max(0,s.cap-ocu);
+          const pct=Math.round(ocu/s.cap*100);
+          return`<tr>
+            <td class="td-main">${s.name}</td>
+            <td>${s.cap} ${s.unit}</td>
+            <td>${ocu}</td>
+            <td><span class="badge badge-${disp===0?'red':pct>70?'amber':'green'}">${disp} ${s.unit}</span></td>
+            <td style="min-width:100px">
+              <div class="prog-bar"><div class="prog-fill ${disp===0?'red':pct>70?'amber':''}" style="width:${pct}%"></div></div>
+              <div class="text-xs text-faint mt-8">${pct}%</div>
+            </td>
+            <td class="text-faint text-xs">${s.desc||'—'}</td>
+            <td>
+              <div class="flex gap-8">
+                <button class="btn btn-sm" onclick="openCapModal('${s.id}')" title="Actualizar capacidad">📊</button>
+                <button class="btn btn-sm btn-icon" onclick="editSoporte('${s.id}')">✏️</button>
+                <button class="btn btn-sm btn-icon btn-danger" onclick="deleteSoporte('${s.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
+}
+
+function initSoporteModal(catId,sId){
+  state.editingSoporteId=sId||null;
+  const catOpts=CATS.map(c=>`<option value="${c.id}"${c.id===catId?' selected':''}>${c.name}</option>`).join('');
+  document.getElementById('s-cat').innerHTML=`<option value="">— elegir —</option>`+catOpts;
+  if(sId){
+    const s=getSoporte(sId);if(!s)return;
+    document.getElementById('s-cat').value=s.catId;
+    document.getElementById('s-nombre').value=s.name;
+    document.getElementById('s-cap').value=s.cap;
+    document.getElementById('s-unidad').value=s.unit;
+    document.getElementById('s-desc').value=s.desc||'';
+  }else{
+    document.getElementById('s-nombre').value='';
+    document.getElementById('s-cap').value='';
+    document.getElementById('s-desc').value='';
+  }
+  openModal('modal-soporte');
+}
+
+function editSoporte(id){initSoporteModal(getSoporte(id)?.catId,id);}
+
+function updateSSubcats(){} // placeholder
+
+function saveSoporte(){
+  const catId=document.getElementById('s-cat').value;
+  const name=document.getElementById('s-nombre').value.trim();
+  const cap=parseInt(document.getElementById('s-cap').value)||1;
+  const unit=document.getElementById('s-unidad').value;
+  const desc=document.getElementById('s-desc').value.trim();
+  if(!catId||!name){notify('Completá categoría y nombre','error');return;}
+  if(state.editingSoporteId){
+    const s=state.soportes.find(x=>x.id===state.editingSoporteId);
+    if(s)Object.assign(s,{catId,name,cap,unit,desc});
+    notify('Soporte actualizado','success');
+  }else{
+    state.soportes.push({id:'s'+Date.now(),catId,name,cap,unit,desc});
+    notify('Soporte creado','success');
+  }
+  save();closeModal('modal-soporte');renderSoportes();
+}
+
+function deleteSoporte(id){
+  const s=getSoporte(id);if(!s)return;
+  document.getElementById('modal-confirm-title').textContent='Eliminar soporte';
+  document.getElementById('modal-confirm-msg').textContent=`¿Eliminar "${s.name}"? Las reservas asociadas también se eliminarán.`;
+  document.getElementById('modal-confirm-btn').onclick=()=>{
+    state.soportes=state.soportes.filter(x=>x.id!==id);
+    state.reservas=state.reservas.filter(r=>r.soporteId!==id);
+    save();closeModal('modal-confirm');renderSoportes();notify('Soporte eliminado');
+  };
+  openModal('modal-confirm');
+}
+
+function openCapModal(sId){
+  state.capSoporteId=sId;
+  const s=getSoporte(sId);
+  document.getElementById('modal-cap-info').textContent=`${s.name} — capacidad actual: ${s.cap} ${s.unit}`;
+  document.getElementById('cap-valor').value=s.cap;
+  document.getElementById('cap-desde').value=today();
+  document.getElementById('cap-motivo').value='';
+  openModal('modal-cap');
+}
+
+function saveCapacidad(){
+  const s=getSoporte(state.capSoporteId);if(!s)return;
+  const val=parseInt(document.getElementById('cap-valor').value);
+  if(!val||val<1){notify('Ingresá una capacidad válida','error');return;}
+  s.cap=val;closeModal('modal-cap');renderSoportes();
+  notify(`Capacidad de ${s.name} actualizada a ${val} ${s.unit}`,'success');
+}
+
+// ============================================================
+// MALLS — filtro por tipo y ubicación
+// ============================================================
+function getMallsTipos(){
+  return [...new Set(state.soportes.filter(s=>s.catId==='malls'&&s.tipoSoporte).map(s=>s.tipoSoporte))];
+}
+function getMallsUbicaciones(tipo){
+  return [...new Set(state.soportes.filter(s=>s.catId==='malls'&&(!tipo||s.tipoSoporte===tipo)&&s.ubicacion).map(s=>s.ubicacion))];
+}
+
+// Override de renderSoportes para Malls con subgrupos
+const _origRenderSoportes = renderSoportes;
+function renderSoportes(){
+  const el=document.getElementById('soportes-grid');
+  const t=today();
+  let html='';
+
+  CATS.forEach(cat=>{
+    const sops=getSoportesBycat(cat.id);
+    if(!sops.length) return;
+
+    if(cat.id==='malls'){
+      // Agrupar por tipoSoporte
+      const tipos=getMallsTipos();
+      html+=`<div class="card mb-16">
+        <div class="sec-head mb-12">
+          <div class="flex items-center gap-8">
+            <div style="width:10px;height:10px;border-radius:50%;background:${cat.color}"></div>
+            <div class="sec-title">${cat.name}</div>
+            <span class="badge badge-gray">${sops.length} soportes</span>
+          </div>
+          <button class="btn btn-sm" onclick="initSoporteModal('${cat.id}')">+ Agregar</button>
+        </div>`;
+
+      if(!tipos.length){
+        html+=renderSoportesTable(sops,t,cat);
+      } else {
+        tipos.forEach(tipo=>{
+          const sopsT=sops.filter(s=>s.tipoSoporte===tipo);
+          const ubics=getMallsUbicaciones(tipo);
+          html+=`<div style="margin-bottom:16px">
+            <div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:${cat.color};margin-bottom:8px;padding:6px 0;border-bottom:1px solid var(--border)">${tipo}</div>`;
+          if(ubics.length){
+            ubics.forEach(ub=>{
+              const sopsU=sopsT.filter(s=>s.ubicacion===ub);
+              html+=`<div style="margin-bottom:8px">
+                <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:4px;padding-left:8px">📍 ${ub}</div>
+                ${renderSoportesTable(sopsU,t,cat)}
+              </div>`;
+            });
+          } else {
+            html+=renderSoportesTable(sopsT,t,cat);
+          }
+          html+=`</div>`;
+        });
+      }
+      html+=`</div>`;
+    } else {
+      html+=`<div class="card mb-16">
+        <div class="sec-head mb-12">
+          <div class="flex items-center gap-8">
+            <div style="width:10px;height:10px;border-radius:50%;background:${cat.color}"></div>
+            <div class="sec-title">${cat.name}</div>
+            <span class="badge badge-gray">${sops.length} soportes</span>
+          </div>
+          <button class="btn btn-sm" onclick="initSoporteModal('${cat.id}')">+ Agregar</button>
+        </div>
+        ${renderSoportesTable(sops,t,cat)}
+      </div>`;
+    }
+  });
+
+  el.innerHTML=html;
+}
+
+function renderSoportesTable(sops,t,cat){
+  return`<div class="tbl-wrap"><table>
+    <thead><tr><th>Soporte</th><th>Capacidad</th><th>Ocupado hoy</th><th>Disponible hoy</th><th>Ocupación</th><th>Descripción</th><th></th></tr></thead>
+    <tbody>${sops.map(s=>{
+      const ocu=ocupadosEnFecha(s.id,t);
+      const disp=Math.max(0,s.cap-ocu);
+      const pct=s.cap?Math.round(ocu/s.cap*100):0;
+      return`<tr>
+        <td class="td-main">${s.name}</td>
+        <td>${s.cap||'—'} ${s.unit}</td>
+        <td>${ocu}</td>
+        <td><span class="badge badge-${disp===0?'red':pct>70?'amber':'green'}">${disp} ${s.unit}</span></td>
+        <td style="min-width:100px">
+          <div class="prog-bar"><div class="prog-fill ${disp===0?'red':pct>70?'amber':''}" style="width:${pct}%"></div></div>
+          <div class="text-xs text-faint mt-8">${pct}%</div>
+        </td>
+        <td class="text-faint text-xs">${s.desc||'—'}</td>
+        <td><div class="flex gap-8">
+          <button class="btn btn-sm" onclick="openCapModal('${s.id}')" title="Capacidad">📊</button>
+          <button class="btn btn-sm btn-icon" onclick="editSoporte('${s.id}')">✏️</button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteSoporte('${s.id}')">✕</button>
+        </div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// Gantt Malls: también agrupa por ubicación
+// (el Gantt ya agrupa por catId, dentro de Malls agrupamos por tipoSoporte+ubicacion via el nombre)
+
+// ============================================================
+// INIT
+// ============================================================
+initAllSelects();
+// Intentar cargar desde Sheets al arrancar
+loadFromSheet();
+
+</script>
+</body>
+</html>
