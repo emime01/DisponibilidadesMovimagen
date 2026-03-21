@@ -1833,10 +1833,11 @@ async function callAI(messages){
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:2000,messages})
+    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages})
   });
   const data=await res.json();
-  if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+  console.log('[AI] status:', res.status, 'response:', JSON.stringify(data).slice(0,300));
+  if(!res.ok) throw new Error(`Error API ${res.status}: ${data.error?.message||JSON.stringify(data)}`);
   const txt=(data.content||[]).map(b=>b.text||'').join('');
   try{ return JSON.parse(txt.replace(/```json|```/g,'').trim()); }
   catch(e){ return null; }
