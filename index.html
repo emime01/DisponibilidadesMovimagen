@@ -719,7 +719,7 @@ async function sheetCall(params){
 
 async function loadFromSheet(){
   if(!SCRIPT_URL){ showSetupBanner(); return; }
-  setLoading(true,'Cargando datos de Google Sheets...');
+  setLoading(true,'Cargando desde Google Sheets...');
   try{
     const data = await sheetCall({action:'getAll'});
     state.soportes = data.soportes || [];
@@ -730,8 +730,7 @@ async function loadFromSheet(){
     notify(`✓ ${state.soportes.length} soportes, ${state.reservas.length} reservas`,'success');
     refreshCurrentPage();
   }catch(e){
-    notify('Error al cargar Sheets: ' + e.message,'error');
-    console.error(e);
+    notify('Error: ' + e.message,'error');
     showSetupBanner();
   }finally{
     setLoading(false);
@@ -742,15 +741,23 @@ async function pushReservaToSheet(reserva){
   if(!SCRIPT_URL || !state.sheetConnected) return;
   try{
     const s = getSoporte(reserva.soporteId);
-    await sheetCall({
+    const cat = s ? getCat(s.catId) : null;
+    const result = await sheetCall({
       action:'addReserva',
-      ...reserva,
-      soporteNombre: s ? s.name : reserva.soporteId,
+      id: reserva.id,
+      cliente: reserva.cliente,
+      soporteId: reserva.soporteId,
+      soporteNombre: s ? s.name : reserva.soporteNombre||'',
+      catName: cat ? cat.name : '',
+      cant: reserva.cant,
+      valor: reserva.valor||0,
+      orden: reserva.orden||'',
+      notas: reserva.notas||'',
+      rangos: reserva.rangos||[]
     });
-    notify('Guardado en Google Sheets ✓','success');
-  } catch(e){
-    notify('Error al guardar en Sheets: ' + e.message,'error');
-  }
+    if(result && result.row) reserva.row = result.row;
+    if(result && result.id) reserva.id = result.id;
+  }catch(e){ console.warn('Error guardando en Sheets:',e.message); }
 }
 
 async function pushEditToSheet(reserva){
