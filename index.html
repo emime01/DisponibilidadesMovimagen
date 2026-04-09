@@ -109,8 +109,9 @@ td{padding:12px 16px;color:var(--gray-800)}
 td.muted{color:var(--gray-400)}
 
 /* CALENDAR STRIP */
-.cal-strip{display:flex;gap:5px;flex-wrap:wrap;padding-bottom:4px;margin-bottom:16px}
-.cal-day{flex:0 0 calc((100% - 150px)/31);min-width:40px;max-width:52px;padding:7px 0;text-align:center;border-radius:8px;border:1.5px solid var(--gray-200);cursor:pointer;transition:all .15s}
+.cal-strip{display:flex;gap:4px;padding-bottom:4px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.cal-strip::-webkit-scrollbar{display:none}
+.cal-day{flex:1 0 0;min-width:36px;max-width:46px;padding:6px 0;text-align:center;border-radius:8px;border:1.5px solid var(--gray-200);cursor:pointer;transition:all .15s}
 .cal-day .day-name{font-size:9px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
 .cal-day .day-num{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--gray-800);margin:1px 0}
 .cal-day .day-avail{font-size:9px;color:var(--green)}
@@ -270,9 +271,9 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-mark">MOVIMAGEN</div>
-    <div class="logo-sub">StockAds 2026</div>
+  <div class="logo" style="padding:20px 20px 16px">
+    <img src="logo.png" alt="Movimagen" style="width:100%;max-width:140px;height:auto;display:block">
+    <div class="logo-sub" style="margin-top:6px">StockAds 2026</div>
   </div>
   <nav class="nav">
     <div class="nav-section">Principal</div>
@@ -340,34 +341,73 @@ textarea{resize:vertical;min-height:80px}
 
   <!-- ===== DISPONIBILIDAD ===== -->
   <div class="screen active" id="screen-disponibilidad">
-    <div class="filters">
-      <input type="text" class="filter-input" placeholder="🔍  Buscar soporte..." id="disp-search" oninput="renderDisponibilidad()" style="width:220px">
-      <select class="filter-select" id="disp-cat" onchange="renderDisponibilidad()">
-        <option value="">Todas las categorías</option>
-        <option value="buses">🚌 Buses</option>
-        <option value="leds">📺 Leds</option>
-        <option value="freeshops">🛍️ Freeshops</option>
-        <option value="shoppings">🏪 Circ. Shoppings</option>
-        <option value="walls">🧱 Walls</option>
-        <option value="malls">🏬 Malls</option>
-      </select>
-      <select class="filter-select" id="disp-estado" onchange="renderDisponibilidad()">
-        <option value="">Todos los estados</option>
-        <option value="disponible">Disponibles</option>
-        <option value="ocupado">Ocupados</option>
-      </select>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="tab active" id="view-grid-btn" onclick="setDispView('grid',this)">Tarjetas</button>
-        <button class="tab" id="view-list-btn" onclick="setDispView('list',this)">Lista</button>
-      </div>
+
+    <!-- Mode tabs -->
+    <div style="display:flex;gap:2px;background:var(--gray-100);border-radius:10px;padding:3px;width:fit-content;margin-bottom:18px">
+      <button class="tab active" id="disp-tab-dia" onclick="setDispMode('dia',this)">📅 Por día</button>
+      <button class="tab" id="disp-tab-periodo" onclick="setDispMode('periodo',this)">🔍 Consultar período</button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <button class="btn btn-outline btn-sm" onclick="changeCalMonth(-1)">‹</button>
-      <span id="cal-month-label" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;min-width:140px;text-align:center"></span>
-      <button class="btn btn-outline btn-sm" onclick="changeCalMonth(1)">›</button>
+    <!-- MODE: DÍA -->
+    <div id="disp-mode-dia">
+      <div class="filters">
+        <input type="text" class="filter-input" placeholder="🔍  Buscar soporte..." id="disp-search" oninput="renderDisponibilidad()" style="width:220px">
+        <select class="filter-select" id="disp-cat" onchange="renderDisponibilidad()">
+          <option value="">Todas las categorías</option>
+          <option value="buses">🚌 Buses</option>
+          <option value="leds">📺 Leds</option>
+          <option value="freeshops">🛍️ Freeshops</option>
+          <option value="shoppings">🏪 Circ. Shoppings</option>
+          <option value="walls">🧱 Walls</option>
+          <option value="malls">🏬 Malls</option>
+        </select>
+        <select class="filter-select" id="disp-estado" onchange="renderDisponibilidad()">
+          <option value="">Todos los estados</option>
+          <option value="disponible">Disponibles</option>
+          <option value="ocupado">Ocupados</option>
+        </select>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="tab active" id="view-grid-btn" onclick="setDispView('grid',this)">Tarjetas</button>
+          <button class="tab" id="view-list-btn" onclick="setDispView('list',this)">Lista</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <button class="btn btn-outline btn-sm" onclick="changeCalMonth(-1)">‹</button>
+        <span id="cal-month-label" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;min-width:140px;text-align:center"></span>
+        <button class="btn btn-outline btn-sm" onclick="changeCalMonth(1)">›</button>
+      </div>
+      <div class="cal-strip" id="cal-strip"></div>
     </div>
-    <div class="cal-strip" id="cal-strip"></div>
+
+    <!-- MODE: PERÍODO -->
+    <div id="disp-mode-periodo" style="display:none">
+      <div class="card card-pad" style="margin-bottom:18px">
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Fecha desde</label>
+            <input type="date" id="periodo-desde" onchange="renderConsulta()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:140px">
+            <label>Fecha hasta</label>
+            <input type="date" id="periodo-hasta" onchange="renderConsulta()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:160px">
+            <label>Categoría</label>
+            <select class="filter-select" id="periodo-cat" onchange="renderConsulta()" style="width:100%">
+              <option value="">Todas las categorías</option>
+              <option value="buses">🚌 Buses</option>
+              <option value="leds">📺 Leds</option>
+              <option value="freeshops">🛍️ Freeshops</option>
+              <option value="shoppings">🏪 Circ. Shoppings</option>
+              <option value="walls">🧱 Walls</option>
+              <option value="malls">🏬 Malls</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="renderConsulta()">Consultar</button>
+        </div>
+      </div>
+      <div id="consulta-results"></div>
+    </div>
 
     <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap" id="disp-stats">
       <div style="background:var(--green-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
@@ -550,7 +590,19 @@ textarea{resize:vertical;min-height:80px}
 
   <!-- ===== CONFIG ===== -->
   <div class="screen" id="screen-config">
-    <div style="max-width:540px">
+    <!-- Lock -->
+    <div id="cfg-lock" style="text-align:center;padding:60px 20px">
+      <div style="font-size:48px;margin-bottom:16px">🔐</div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Configuración</div>
+      <div style="font-size:13px;color:var(--gray-400);margin-bottom:24px">Ingresá la contraseña para acceder</div>
+      <div style="display:flex;justify-content:center;gap:10px;align-items:center">
+        <input type="password" id="cfg-lock-pwd" placeholder="Contraseña" style="width:160px;text-align:center"
+          onkeydown="if(event.key==='Enter')checkCfgLock()">
+        <button class="btn btn-primary" onclick="checkCfgLock()">Ingresar</button>
+      </div>
+      <div id="cfg-lock-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none">Contraseña incorrecta</div>
+    </div>
+    <div id="cfg-content" style="display:none;max-width:540px">
       <div class="card card-pad" style="margin-bottom:16px">
         <div class="section-title">Conexión Google Sheets</div>
         <div class="form-group" style="margin-bottom:12px">
@@ -583,13 +635,13 @@ textarea{resize:vertical;min-height:80px}
         <div class="form-group" style="margin-bottom:12px">
           <label>Rol</label>
           <select id="cfg-rol">
-            <option value="Ventas">Ventas</option>
-            <option value="Gerencia">Gerencia</option>
+            <option value="Vendedor">Vendedor</option>
+            <option value="Administrador">Administrador</option>
           </select>
         </div>
         <button class="btn btn-primary" onclick="saveCfgPerfil()">Guardar</button>
       </div>
-    </div>
+    </div></div><!-- /cfg-content -->
   </div>
 
   <!-- ===== APROBACIONES ===== -->
@@ -742,7 +794,7 @@ textarea{resize:vertical;min-height:80px}
 let SCRIPT_URL = localStorage.getItem('sa_script_url') || '';
 let CLAUDE_KEY  = localStorage.getItem('sa_claude_key') || '';
 let USERNAME    = localStorage.getItem('sa_nombre') || 'Movimagen';
-let USERROLE    = localStorage.getItem('sa_rol') || 'Ventas';
+let USERROLE    = localStorage.getItem('sa_rol') || 'Vendedor';
 
 const CATS = [
   {id:'buses',    name:'Buses',           icon:'🚌'},
@@ -756,14 +808,16 @@ const CATS = [
 let state = {
   soportes: [],
   reservas: [],
-  pendientes: [],        // reservas pendientes de aprobación
+  pendientes: [],
   sheetConnected: false,
   editingId: null,
   dispView: 'grid',
+  dispMode: 'dia',
   selectedDate: new Date(),
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
   approvalUnlocked: false,
+  cfgUnlocked: false,
   viewingPendienteId: null,
 };
 
@@ -1017,8 +1071,95 @@ function refreshAll(){
 }
 
 // =============================================
-// CALENDAR — mes completo con navegación
+// DISPONIBILIDAD — modo día / período
 // =============================================
+function setDispMode(mode, btn){
+  state.dispMode = mode;
+  document.querySelectorAll('#screen-disponibilidad .tab').forEach(t=>{
+    if(t.id && t.id.startsWith('disp-tab-')) t.classList.remove('active');
+  });
+  if(btn) btn.classList.add('active');
+  document.getElementById('disp-mode-dia').style.display     = mode==='dia'     ? '' : 'none';
+  document.getElementById('disp-mode-periodo').style.display = mode==='periodo' ? '' : 'none';
+  if(mode==='periodo'){
+    // Pre-fill dates if empty
+    const d = document.getElementById('periodo-desde');
+    const h = document.getElementById('periodo-hasta');
+    if(!d.value) d.value = today();
+    if(!h.value) h.value = addDays(today(), 30);
+    renderConsulta();
+  }
+}
+
+function renderConsulta(){
+  const desde  = document.getElementById('periodo-desde').value;
+  const hasta  = document.getElementById('periodo-hasta').value;
+  const catF   = document.getElementById('periodo-cat').value;
+  const area   = document.getElementById('consulta-results');
+  if(!desde || !hasta){ area.innerHTML=''; return; }
+
+  // For each soporte, find max occupied any day in range
+  let soportes = state.soportes.filter(s => !catF || s.catId===catF);
+
+  const results = soportes.map(s=>{
+    let maxOcup = 0;
+    let d = new Date(desde+'T00:00:00');
+    const end = new Date(hasta+'T00:00:00');
+    while(d <= end){
+      const dStr = d.toISOString().slice(0,10);
+      const ocup = state.reservas
+        .filter(r => r.soporteId===s.id && (r.rangos||[]).some(rg=>rg.desde<=dStr&&rg.hasta>=dStr))
+        .reduce((sum,r)=>sum+(parseInt(r.cant)||0),0);
+      if(ocup > maxOcup) maxOcup = ocup;
+      d.setDate(d.getDate()+1);
+    }
+    const disponible = Math.max(0, (s.cap||0) - maxOcup);
+    const pct = s.cap>0 ? Math.min(100, Math.round(maxOcup/s.cap*100)) : 0;
+    return {...s, maxOcup, disponible, pct};
+  }).sort((a,b)=>b.disponible-a.disponible);
+
+  const nDisp = results.filter(s=>s.disponible>0).length;
+  const nOcup = results.filter(s=>s.disponible===0).length;
+
+  area.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:18px">
+      <div style="background:var(--green-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)">${nDisp}</span>
+        <span style="font-size:12px;color:#1a7a4e">Con disponibilidad</span>
+      </div>
+      <div style="background:var(--red-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--red)">${nOcup}</span>
+        <span style="font-size:12px;color:#c53030">Sin disponibilidad</span>
+      </div>
+      <div style="background:var(--gray-100);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px;color:var(--gray-600);font-size:12px">
+        📅 ${fmtDate(desde)} → ${fmtDate(hasta)}
+      </div>
+    </div>
+    <div class="support-grid">
+      ${results.map(s=>{
+        const cat = getCat(s.catId)||{icon:'📌',name:''};
+        const avail = s.disponible > 0;
+        return `<div class="support-card${!avail?' occupied':''}" onclick="showSoporteDetalle('${s.id}')">
+          <span class="badge ${avail?'badge-green':'badge-red'}">
+            <span class="dot ${avail?'dot-green':'dot-red'}"></span>
+            ${avail?'Disponible':'Sin lugar'}
+          </span>
+          <div class="type-icon">${cat.icon}</div>
+          <div class="support-name">${s.name}</div>
+          <div class="support-meta">${cat.name} · cap. ${s.cap} ${s.unit||''}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+            <div class="support-occ" style="color:${avail?'var(--green)':'var(--red)'}">
+              ${s.disponible}<span style="font-size:11px;font-weight:400;color:var(--gray-400)"> disponible${s.disponible!==1?'s':''}</span>
+            </div>
+            <span style="font-size:12px;color:var(--gray-400)">${s.pct}% ocup.</span>
+          </div>
+          <div class="occ-bar"><div class="occ-fill" style="width:${s.pct}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
@@ -2143,11 +2284,31 @@ function resetScanner(){
 // CONFIG SCREEN
 // =============================================
 function loadConfigForm(){
+  // Show lock unless already unlocked
+  if(!state.cfgUnlocked){
+    document.getElementById('cfg-lock').style.display = '';
+    document.getElementById('cfg-content').style.display = 'none';
+    document.getElementById('cfg-lock-pwd').value = '';
+    document.getElementById('cfg-lock-error').style.display = 'none';
+    return;
+  }
+  document.getElementById('cfg-lock').style.display = 'none';
+  document.getElementById('cfg-content').style.display = '';
   document.getElementById('cfg-script').value = SCRIPT_URL;
   document.getElementById('cfg-claude').value = CLAUDE_KEY;
   document.getElementById('cfg-nombre').value = USERNAME;
   document.getElementById('cfg-rol').value = USERROLE;
   document.getElementById('cfg-sheet-status').textContent = state.sheetConnected ? '✓ Conectado' : 'Sin conectar';
+}
+
+function checkCfgLock(){
+  const pwd = document.getElementById('cfg-lock-pwd').value;
+  if(pwd === '6411'){
+    state.cfgUnlocked = true;
+    loadConfigForm();
+  } else {
+    document.getElementById('cfg-lock-error').style.display = '';
+  }
 }
 
 function saveCfgSheet(){
@@ -2166,7 +2327,6 @@ function saveCfgPerfil(){
   localStorage.setItem('sa_nombre',USERNAME);
   localStorage.setItem('sa_rol',USERROLE);
   document.getElementById('user-name').textContent = USERNAME;
-  document.getElementById('user-role').textContent = USERROLE;
   const initials = USERNAME.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   applyRoleUI();
@@ -2177,9 +2337,12 @@ function saveCfgPerfil(){
 // INIT
 // =============================================
 function applyRoleUI(){
-  const isVentas = USERROLE === 'Ventas';
-  const navInv = document.getElementById('nav-inventario');
-  if(navInv) navInv.style.display = isVentas ? 'none' : '';
+  const isAdmin = USERROLE === 'Administrador';
+  const navInv  = document.getElementById('nav-inventario');
+  const navAprov= document.getElementById('nav-aprobaciones');
+  if(navInv)   navInv.style.display   = isAdmin ? '' : 'none';
+  if(navAprov) navAprov.style.display = isAdmin ? '' : 'none';
+  document.getElementById('user-role').textContent = USERROLE;
 }
 
 function init(){
