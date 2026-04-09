@@ -2066,7 +2066,11 @@ async function callAI(messages, systemPrompt){
 
 async function callClaude(messages, systemPrompt){
   if(!CLAUDE_KEY) throw new Error('Configurá la API key de Claude en Configuración');
-  const body = { model:'claude-sonnet-4-5', max_tokens:1000, messages };
+  // Use haiku for chat (10x cheaper than sonnet), sonnet only for scan
+  const model = (messages.length===1 && typeof messages[0].content!=='string') 
+    ? 'claude-sonnet-4-5'   // scan with image/PDF needs better model
+    : 'claude-haiku-4-5-20251001'; // chat uses haiku
+  const body = { model, max_tokens:800, messages };
   if(systemPrompt) body.system = systemPrompt;
   const res = await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -2085,7 +2089,8 @@ async function callClaude(messages, systemPrompt){
 
 async function callGemini(messages, systemPrompt){
   if(!GEMINI_KEY) throw new Error('Configurá la API key de Gemini en Configuración');
-  // Build contents array for Gemini
+  // Use flash for chat (cheapest), flash for scan too (handles images)
+  const model = 'gemini-2.0-flash';
   const contents = [];
   if(systemPrompt){
     contents.push({ role:'user',  parts:[{text: systemPrompt}] });
@@ -2105,7 +2110,7 @@ async function callGemini(messages, systemPrompt){
     }
   });
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
     { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents}) }
   );
   const data = await res.json();
@@ -2115,19 +2120,37 @@ async function callGemini(messages, systemPrompt){
 
 function buildContextForAI(){
   const d = today();
-  const soportesCtx = state.soportes.map(s=>{
-    const cat=getCat(s.catId);
-    const {reservado,cap,pct}=getOccupancy(s.id,d);
-    const reservas=getReservasByDate(s.id,d);
-    return `${s.name} (${cat?cat.name:s.catId}) — cap:${cap} reservado:${reservado} occ:${pct}%${reservas.length?' clientes:'+reservas.map(r=>r.cliente).join(','): ''}`;
-  }).join('\n');
-  const reservasCtx = state.reservas.slice(0,50).map(r=>{
-    const s=getSoporte(r.soporteId);
-    const rango=(r.rangos||[{}])[0];
-    return `${r.cliente} — ${s?s.name:r.soporteId} — ${rango.desde} a ${rango.hasta} — cant:${r.cant}`;
-  }).join('\n');
-  return `Sos el asistente de Movimagen, empresa de publicidad exterior en Uruguay.\nHoy es ${fmtDate(d)}.\n\nINVENTARIO (${state.soportes.length} soportes):\n${soportesCtx}\n\nRESERVAS ACTIVAS:\n${reservasCtx}`;
+
+  // Resumen compacto por categoría (no soporte por soporte)
+  const catResumen = CATS.map(cat=>{
+    const sops = state.soportes.filter(s=>s.catId===cat.id);
+    if(!sops.length) return null;
+    const totalCap = sops.reduce((sum,s)=>sum+(s.cap||0),0);
+    const totalRes = sops.reduce((sum,s)=>sum+getOccupancy(s.id,d).reservado,0);
+    const pct = totalCap>0 ? Math.round(totalRes/totalCap*100) : 0;
+    // Solo los soportes con actividad hoy
+    const activos = sops.filter(s=>getOccupancy(s.id,d).pct>0)
+      .map(s=>`${s.name}(${getOccupancy(s.id,d).pct}%)`).join(',');
+    return `${cat.name}: ${sops.length} soportes, cap ${totalCap}, ocup ${pct}%${activos?'. Activos: '+activos:''}`;
+  }).filter(Boolean).join('\n');
+
+  // Solo reservas activas hoy (máx 20)
+  const activas = state.reservas
+    .filter(r=>isActiveOnDate(r,d))
+    .slice(0,20)
+    .map(r=>{
+      const s=getSoporte(r.soporteId);
+      return `${r.cliente}|${s?s.name:r.soporteId}|cant:${r.cant}`;
+    }).join('\n');
+
+  return `Asistente de Movimagen (publicidad exterior, Uruguay). Hoy: ${d}.
+RESUMEN POR CATEGORÍA:\n${catResumen}
+RESERVAS ACTIVAS HOY (${state.reservas.filter(r=>isActiveOnDate(r,d)).length} total):\n${activas||'ninguna'}
+Respondé en español, sé conciso.`;
 }
+
+// Historial del chat (máx últimos 6 mensajes = 3 intercambios)
+const chatHistory = [];
 
 function appendMsg(text, role){
   const container = document.getElementById('chat-messages');
@@ -2145,6 +2168,10 @@ async function sendChat(){
   appendMsg(msg, 'user');
   input.value = '';
 
+  // Add to history and trim to last 6 messages
+  chatHistory.push({role:'user', content:msg});
+  if(chatHistory.length > 6) chatHistory.splice(0, chatHistory.length - 6);
+
   const container = document.getElementById('chat-messages');
   const typing = document.createElement('div');
   typing.className = 'msg msg-ai';
@@ -2155,12 +2182,16 @@ async function sendChat(){
 
   try{
     const system = buildContextForAI();
-    const text = await callAI([{role:'user',content:msg}], system);
+    const text = await callAI([...chatHistory], system);
     document.getElementById('typing')?.remove();
     appendMsg(text, 'ai');
+    // Add assistant response to history
+    chatHistory.push({role:'assistant', content:text});
+    if(chatHistory.length > 6) chatHistory.splice(0, chatHistory.length - 6);
   }catch(e){
     document.getElementById('typing')?.remove();
     appendMsg('Error: ' + e.message + '. Verificá tu API key en Config.', 'ai');
+    chatHistory.pop(); // Remove failed user message
   }
 }
 
