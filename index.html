@@ -664,6 +664,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="modal-actions">
       <button class="btn btn-outline btn-danger btn-sm" id="modal-del-btn">Eliminar</button>
       <button class="btn btn-outline" id="modal-edit-btn">Editar</button>
+      <button class="btn btn-primary" id="modal-confirm-btn" style="display:none" title="Mover a Ventas Confirmadas">✓ Confirmar venta</button>
       <button class="btn btn-outline" onclick="closeModal('modal-ver-reserva')">Cerrar</button>
     </div>
   </div>
@@ -1375,9 +1376,12 @@ function renderReservas(){
             const cat=s?getCat(s.catId):null;
             const dv=getDaysUntilVence(r);
             const activo=isActiveOnDate(r,d);
-            const bc=dv<0?'badge-gray':dv<=7?'badge-red':dv<=30?'badge-amber':'badge-green';
-            const bl=dv<0?'Vencida':dv===0?'Hoy':dv<=30?`${dv}d`:'Activa';
-            const dot=dv<0?'':dv<=7?' dot-red':dv<=30?' dot-amber':' dot-green';
+            const bc = r.estado==='confirmada' ? 'badge-green'
+                     : dv<0?'badge-gray':dv<=7?'badge-red':dv<=30?'badge-amber':'badge-green';
+            const bl = r.estado==='confirmada' ? '✓ Confirmada'
+                     : dv<0?'Vencida':dv===0?'Hoy':dv<=30?`${dv}d`:'Activa';
+            const dot = r.estado==='confirmada' ? ' dot-green'
+                      : dv<0?'':dv<=7?' dot-red':dv<=30?' dot-amber':' dot-green';
             const rango=(r.rangos||[{desde:'',hasta:''}])[0];
             return `<tr>
               <td class="muted" style="font-size:11px;width:70px">${r.id||'—'}</td>
@@ -1508,20 +1512,59 @@ function verReserva(id){
   if(!r) return;
   const s = getSoporte(r.soporteId);
   const cat = s?getCat(s.catId):null;
+  const confirmada = r.estado === 'confirmada';
+
   document.getElementById('modal-ver-content').innerHTML = `
     <table style="width:100%;font-size:13px">
       <tr><td style="color:var(--gray-400);width:130px">ID</td><td>${r.id||'—'}</td></tr>
+      <tr><td style="color:var(--gray-400)">Estado</td><td>${confirmada
+        ? '<span class="badge badge-green">✓ Venta confirmada</span>'
+        : '<span class="badge badge-amber">Reserva activa</span>'}</td></tr>
       <tr><td style="color:var(--gray-400)">Cliente</td><td><strong>${r.cliente}</strong></td></tr>
       <tr><td style="color:var(--gray-400)">Soporte</td><td>${s?s.name:r.soporteId}${cat?' · '+cat.icon+' '+cat.name:''}</td></tr>
       <tr><td style="color:var(--gray-400)">Cantidad</td><td>${r.cant} ${s?s.unit||'':''}</td></tr>
       <tr><td style="color:var(--gray-400)">Período</td><td>${(r.rangos||[]).map(x=>fmtDate(x.desde)+' – '+fmtDate(x.hasta)).join('<br>')}</td></tr>
-      <tr><td style="color:var(--gray-400)">Valor</td><td>${fmtMoney(r.valor)}</td></tr>
+      <tr><td style="color:var(--gray-400)">Valor USD</td><td>${fmtMoney(r.valor)}</td></tr>
       <tr><td style="color:var(--gray-400)">N° Orden</td><td>${r.orden||'—'}</td></tr>
       <tr><td style="color:var(--gray-400)">Notas</td><td>${r.notas||'—'}</td></tr>
     </table>`;
-  document.getElementById('modal-del-btn').onclick = ()=>{ deleteReserva(id); closeModal('modal-ver-reserva'); };
+
+  document.getElementById('modal-del-btn').onclick  = ()=>{ deleteReserva(id); closeModal('modal-ver-reserva'); };
   document.getElementById('modal-edit-btn').onclick = ()=>{ closeModal('modal-ver-reserva'); openModal('modal-reserva'); initReservaModal(id); };
+
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  if(state.approvalUnlocked && !confirmada){
+    confirmBtn.style.display = '';
+    confirmBtn.onclick = ()=> doConfirmarVenta(id);
+  } else {
+    confirmBtn.style.display = 'none';
+  }
+
   openModal('modal-ver-reserva');
+}
+
+async function doConfirmarVenta(id){
+  const r = state.reservas.find(x=>x.id===id);
+  if(!r) return;
+  if(!confirm(`¿Confirmar venta de ${r.cliente}? La reserva se moverá a "Ventas Confirmadas" en Google Sheets.`)) return;
+
+  // Actualizar en Sheets
+  if(SCRIPT_URL && state.sheetConnected && r.row){
+    try{
+      setLoading(true,'Confirmando venta...');
+      await sheetCall({action:'confirmarVenta', row: r.row, id: r.id});
+      setLoading(false);
+    }catch(e){
+      setLoading(false);
+      notify('Error en Sheets: ' + e.message, 'error');
+    }
+  }
+
+  // Marcar localmente como confirmada
+  r.estado = 'confirmada';
+  closeModal('modal-ver-reserva');
+  renderReservas();
+  notify(`✓ Venta de ${r.cliente} confirmada`,'success');
 }
 
 function deleteReserva(id){
