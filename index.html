@@ -1502,6 +1502,8 @@ function rejectPendiente(id){
   renderPendientes();
   notify(`Reserva de ${r.cliente} rechazada`,'info');
 }
+
+function verReserva(id){
   const r = state.reservas.find(x=>x.id===id);
   if(!r) return;
   const s = getSoporte(r.soporteId);
