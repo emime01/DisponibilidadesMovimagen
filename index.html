@@ -109,16 +109,16 @@ td{padding:12px 16px;color:var(--gray-800)}
 td.muted{color:var(--gray-400)}
 
 /* CALENDAR STRIP */
-.cal-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;scrollbar-width:none}
-.cal-strip::-webkit-scrollbar{display:none}
-.cal-day{flex-shrink:0;width:52px;padding:10px 0;text-align:center;border-radius:10px;border:1.5px solid var(--gray-200);cursor:pointer;transition:all .15s}
-.cal-day .day-name{font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px}
-.cal-day .day-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--gray-800);margin:2px 0}
-.cal-day .day-avail{font-size:10px;color:var(--green)}
+.cal-strip{display:flex;gap:5px;flex-wrap:wrap;padding-bottom:4px;margin-bottom:16px}
+.cal-day{flex:0 0 calc((100% - 150px)/31);min-width:40px;max-width:52px;padding:7px 0;text-align:center;border-radius:8px;border:1.5px solid var(--gray-200);cursor:pointer;transition:all .15s}
+.cal-day .day-name{font-size:9px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
+.cal-day .day-num{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--gray-800);margin:1px 0}
+.cal-day .day-avail{font-size:9px;color:var(--green)}
 .cal-day:hover{border-color:var(--orange-light);background:var(--orange-pale)}
 .cal-day.selected{border-color:var(--orange);background:var(--orange)}
 .cal-day.selected .day-name{color:rgba(255,255,255,.7)}
 .cal-day.selected .day-num{color:#fff}
+.cal-day.selected .day-avail{color:rgba(255,255,255,.85)}
 .cal-day.today{border-color:var(--orange-light);background:var(--orange-pale)}
 .cal-day.today .day-num{color:var(--orange)}
 
@@ -288,6 +288,10 @@ textarea{resize:vertical;min-height:80px}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v10l-6-3-6 3V4z"/></svg>
       Reservas <span class="nav-badge" id="badge-vence" style="display:none">!</span>
     </div>
+    <div class="nav-item" id="nav-aprobaciones" onclick="showScreen('aprobaciones',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l4 4 8-8"/></svg>
+      Aprobaciones <span class="nav-badge" id="badge-pending" style="display:none">0</span>
+    </div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" onclick="showScreen('chat',this)">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 10a2 2 0 01-2 2H5l-3 3V4a2 2 0 012-2h8a2 2 0 012 2v6z"/></svg>
@@ -370,10 +374,6 @@ textarea{resize:vertical;min-height:80px}
         <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)" id="cnt-disp">0</span>
         <span style="font-size:12px;color:#1a7a4e">Disponibles</span>
       </div>
-      <div style="background:var(--amber-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--amber)" id="cnt-parcial">0</span>
-        <span style="font-size:12px;color:#92600a">Parciales</span>
-      </div>
       <div style="background:var(--red-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
         <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--red)" id="cnt-ocup">0</span>
         <span style="font-size:12px;color:#c53030">Ocupados</span>
@@ -383,7 +383,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="support-grid" id="support-grid"></div>
     <div class="card" id="support-list" style="display:none">
       <table>
-        <thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Cap. total</th><th>Reservado hoy</th><th>Ocupación</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Categoría</th><th>Capacidad</th><th>Reservado</th><th>Disponible</th><th>Ocupación</th><th>Estado</th><th></th></tr></thead>
         <tbody id="support-list-tbody"></tbody>
       </table>
     </div>
@@ -425,23 +425,6 @@ textarea{resize:vertical;min-height:80px}
       <div class="metric-card"><div class="metric-label">Total reservas</div><div class="metric-value" id="r-activas">—</div></div>
       <div class="metric-card accent"><div class="metric-label">Clientes únicos</div><div class="metric-value" id="r-clientes">—</div></div>
       <div class="metric-card"><div class="metric-label">Vencen ≤30 días</div><div class="metric-value" id="r-vence">—</div></div>
-    </div>
-    <!-- Pendientes de aprobación -->
-    <div id="pending-section" style="display:none;margin-bottom:20px">
-      <div class="card" style="border-left:4px solid var(--amber)">
-        <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">⏳</span>
-            <div class="section-title" style="margin:0">Pendientes de aprobación</div>
-            <span class="badge badge-amber" id="pending-count">0</span>
-          </div>
-          <button class="btn btn-sm btn-outline" onclick="unlockApproval()">🔐 Aprobar</button>
-        </div>
-        <table>
-          <thead><tr><th>#</th><th>Soporte</th><th>Cliente</th><th>Período</th><th>Cant.</th><th>Valor</th><th>Acciones</th></tr></thead>
-          <tbody id="pending-tbody"></tbody>
-        </table>
-      </div>
     </div>
     <!-- Filtros + historial -->
     <div class="card">
@@ -609,6 +592,60 @@ textarea{resize:vertical;min-height:80px}
     </div>
   </div>
 
+  <!-- ===== APROBACIONES ===== -->
+  <div class="screen" id="screen-aprobaciones">
+
+    <!-- Bloqueo si no está desbloqueado -->
+    <div id="aprov-lock" style="display:none;text-align:center;padding:60px 20px">
+      <div style="font-size:48px;margin-bottom:16px">🔐</div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Acceso restringido</div>
+      <div style="font-size:13px;color:var(--gray-400);margin-bottom:24px">Esta sección es solo para Emiliano</div>
+      <div style="display:flex;justify-content:center;gap:10px;align-items:center">
+        <input type="password" id="lock-pwd" placeholder="Contraseña" style="width:160px;text-align:center"
+          onkeydown="if(event.key==='Enter')checkLockPwd()">
+        <button class="btn btn-primary" onclick="checkLockPwd()">Ingresar</button>
+      </div>
+      <div id="lock-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none">Contraseña incorrecta</div>
+    </div>
+
+    <!-- Contenido desbloqueado -->
+    <div id="aprov-content" style="display:none">
+
+      <!-- PENDIENTES DE APROBACIÓN -->
+      <div class="card" style="margin-bottom:20px;border-left:4px solid var(--amber)">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:12px">
+          <span style="font-size:20px">⏳</span>
+          <div class="section-title" style="margin:0">Pendientes de aprobación</div>
+          <span class="badge badge-amber" id="pending-count">0</span>
+        </div>
+        <div id="pending-empty" style="padding:32px;text-align:center;color:var(--gray-400);font-size:13px;display:none">
+          No hay reservas pendientes
+        </div>
+        <table id="pending-table" style="display:none">
+          <thead><tr><th>#</th><th>Soporte</th><th>Cliente</th><th>Período</th><th>Cant.</th><th>Valor</th><th>Acciones</th></tr></thead>
+          <tbody id="pending-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- RESERVAS A CONFIRMAR (activas, no confirmadas) -->
+      <div class="card">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:12px">
+          <span style="font-size:20px">📋</span>
+          <div class="section-title" style="margin:0">Reservas a confirmar como venta</div>
+          <span class="badge badge-blue" id="to-confirm-count">0</span>
+        </div>
+        <div id="to-confirm-empty" style="padding:32px;text-align:center;color:var(--gray-400);font-size:13px;display:none">
+          No hay reservas pendientes de confirmar como venta
+        </div>
+        <table id="to-confirm-table" style="display:none">
+          <thead><tr><th>#</th><th>Soporte</th><th>Cliente</th><th>Período</th><th>Cant.</th><th>Valor</th><th>Acciones</th></tr></thead>
+          <tbody id="to-confirm-tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <!-- MODAL RESERVA -->
@@ -682,22 +719,6 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
-<!-- MODAL APROBAR (contraseña) -->
-<div class="modal-overlay" id="modal-aprobar" onclick="if(event.target===this)closeModal('modal-aprobar')">
-  <div class="modal" style="width:360px">
-    <div class="modal-title">🔐 Acceso de aprobación</div>
-    <p style="font-size:13px;color:var(--gray-600);margin-bottom:16px">Ingresá la contraseña de Emiliano para aprobar reservas pendientes.</p>
-    <div class="form-group">
-      <label>Contraseña</label>
-      <input type="password" id="approval-pwd" placeholder="••••" onkeydown="if(event.key==='Enter')checkApprovalPwd()">
-    </div>
-    <div id="approval-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none">Contraseña incorrecta</div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-aprobar')">Cancelar</button>
-      <button class="btn btn-primary" onclick="checkApprovalPwd()">Ingresar</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL VER PENDIENTE -->
 <div class="modal-overlay" id="modal-ver-pendiente" onclick="if(event.target===this)closeModal('modal-ver-pendiente')">
@@ -922,8 +943,7 @@ function getOccupancy(soporteId, date){
 }
 
 function getStatus(pct){
-  if(pct>=90) return 'ocupado';
-  if(pct>0)   return 'parcial';
+  if(pct>=100) return 'ocupado';
   return 'disponible';
 }
 
@@ -967,8 +987,8 @@ function setLoading(on, msg=''){
 // =============================================
 const SCREEN_TITLES = {
   disponibilidad:'Disponibilidad de Soportes', dashboard:'Dashboard',
-  reservas:'Reservas', chat:'Chat IA', scanner:'Escanear Orden',
-  inventario:'Inventario', config:'Configuración'
+  reservas:'Reservas', aprobaciones:'Aprobaciones', chat:'Chat IA',
+  scanner:'Escanear Orden', inventario:'Inventario', config:'Configuración'
 };
 
 function showScreen(id, navEl){
@@ -977,10 +997,10 @@ function showScreen(id, navEl){
   document.getElementById('screen-'+id).classList.add('active');
   if(navEl) navEl.classList.add('active');
   document.getElementById('page-title').textContent = SCREEN_TITLES[id]||id;
-  // Render on demand
   if(id==='disponibilidad') renderDisponibilidad();
   if(id==='dashboard') renderDashboard();
   if(id==='reservas') renderReservas();
+  if(id==='aprobaciones') renderAprobaciones();
   if(id==='inventario') renderInventario();
   if(id==='chat') renderChatRecent();
   if(id==='config') loadConfigForm();
@@ -1076,15 +1096,13 @@ function renderDisponibilidad(){
   });
 
   // Stats
-  let nDisp=0,nParcial=0,nOcup=0;
+  let nDisp=0,nOcup=0;
   list.forEach(s=>{
     const {pct}=getOccupancy(s.id,date);
-    if(pct>=90) nOcup++;
-    else if(pct>0) nParcial++;
+    if(pct>=100) nOcup++;
     else nDisp++;
   });
   document.getElementById('cnt-disp').textContent=nDisp;
-  document.getElementById('cnt-parcial').textContent=nParcial;
   document.getElementById('cnt-ocup').textContent=nOcup;
 
   // Grid
@@ -1096,14 +1114,13 @@ function renderDisponibilidad(){
       const cat = getCat(s.catId)||{icon:'📌',name:''};
       const {reservado,cap,pct} = getOccupancy(s.id,date);
       const st = getStatus(pct);
-      const badgeClass = st==='ocupado'?'badge-red':st==='parcial'?'badge-amber':'badge-green';
-      const badgeDot   = st==='ocupado'?'dot-red':st==='parcial'?'dot-amber':'dot-green';
-      const label      = st==='ocupado'?'Ocupado':st==='parcial'?'Parcial':'Disponible';
+      const badgeClass = st==='ocupado'?'badge-red':'badge-green';
+      const badgeDot   = st==='ocupado'?'dot-red':'dot-green';
+      const label      = st==='ocupado'?'Ocupado':'Disponible';
       const clientes   = getReservasByDate(s.id,date);
       return `<div class="support-card${st==='ocupado'?' occupied':''}" onclick="showSoporteDetalle('${s.id}')">
         <span class="badge ${badgeClass}"><span class="dot ${badgeDot}"></span>${label}</span>
         <div class="type-icon">${cat.icon}</div>
-        <div class="support-id">${s.id}</div>
         <div class="support-name">${s.name}</div>
         <div class="support-meta">${cat.name} · cap. ${cap} ${s.unit||''}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
@@ -1122,15 +1139,16 @@ function renderDisponibilidad(){
     const cat=getCat(s.catId)||{icon:'',name:''};
     const {reservado,cap,pct}=getOccupancy(s.id,date);
     const st=getStatus(pct);
-    const bc=st==='ocupado'?'badge-red':st==='parcial'?'badge-amber':'badge-green';
-    const bl=st==='ocupado'?'Ocupado':st==='parcial'?'Parcial':'Disponible';
-    const dot=st==='ocupado'?'dot-red':st==='parcial'?'dot-amber':'dot-green';
+    const bc=st==='ocupado'?'badge-red':'badge-green';
+    const bl=st==='ocupado'?'Ocupado':'Disponible';
+    const dot=st==='ocupado'?'dot-red':'dot-green';
+    const disponible=Math.max(0,cap-reservado);
     return `<tr>
-      <td style="font-weight:600">${s.id}</td>
       <td>${s.name}</td>
       <td>${cat.icon} ${cat.name}</td>
       <td>${cap}</td>
       <td class="${reservado>0?'':'muted'}">${reservado}</td>
+      <td style="font-weight:600;color:${disponible>0?'var(--green)':'var(--red)'}">${disponible}</td>
       <td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:var(--gray-100);border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--orange);border-radius:4px"></div></div><span style="font-size:12px">${pct}%</span></div></td>
       <td><span class="badge ${bc}"><span class="dot ${dot}"></span>${bl}</span></td>
       <td><button class="btn btn-outline btn-sm" onclick="showSoporteDetalle('${s.id}')">Ver</button></td>
@@ -1403,18 +1421,57 @@ function renderReservas(){
 }
 
 // =============================================
-// PENDIENTES DE APROBACIÓN
+// APROBACIONES SCREEN
 // =============================================
+function renderAprobaciones(){
+  // Show lock or content based on state
+  const lock = document.getElementById('aprov-lock');
+  const aprvContent = document.getElementById('aprov-content');
+  if(state.approvalUnlocked){
+    lock.style.display = 'none';
+    aprvContent.style.display = '';
+    renderPendientes();
+    renderToConfirm();
+  } else {
+    lock.style.display = '';
+    aprvContent.style.display = 'none';
+    document.getElementById('lock-pwd').value = '';
+    document.getElementById('lock-error').style.display = 'none';
+  }
+}
+
+function checkLockPwd(){
+  const pwd = document.getElementById('lock-pwd').value;
+  if(pwd === '6411'){
+    state.approvalUnlocked = true;
+    renderAprobaciones();
+    notify('Bienvenido, Emiliano ✓','success');
+  } else {
+    document.getElementById('lock-error').style.display = '';
+  }
+}
+
 function renderPendientes(){
-  const sec = document.getElementById('pending-section');
-  const tbody = document.getElementById('pending-tbody');
-  const badge = document.getElementById('pending-count');
-  if(!sec || !tbody) return;
+  const tbody  = document.getElementById('pending-tbody');
+  const badge  = document.getElementById('pending-count');
+  const navBadge = document.getElementById('badge-pending');
+  const empty  = document.getElementById('pending-empty');
+  const table  = document.getElementById('pending-table');
+  if(!tbody) return;
 
   const list = state.pendientes||[];
-  if(!list.length){ sec.style.display='none'; return; }
-  sec.style.display='';
-  badge.textContent = list.length;
+
+  // Update nav badge
+  if(navBadge){ navBadge.style.display = list.length ? '' : 'none'; navBadge.textContent = list.length; }
+  if(badge) badge.textContent = list.length;
+
+  if(!list.length){
+    if(empty) empty.style.display = '';
+    if(table) table.style.display = 'none';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  if(table) table.style.display = '';
 
   tbody.innerHTML = list.map(r=>{
     const s=getSoporte(r.soporteId);
@@ -1426,33 +1483,53 @@ function renderPendientes(){
       <td style="white-space:nowrap">${fmtDate(rango.desde)} – ${fmtDate(rango.hasta)}</td>
       <td>${r.cant}</td>
       <td>${fmtMoney(r.valor)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-sm" onclick="verPendiente('${r.id}')">Ver</button>
+      <td style="white-space:nowrap;display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="approvePendiente('${r.id}')">✓ Aprobar</button>
+        <button class="btn btn-outline btn-sm btn-danger" onclick="rejectPendiente('${r.id}')">✕</button>
       </td>
     </tr>`;
   }).join('');
 }
 
-function unlockApproval(){
-  if(state.approvalUnlocked){ enterApprovalMode(); return; }
-  document.getElementById('approval-pwd').value='';
-  document.getElementById('approval-error').style.display='none';
-  openModal('modal-aprobar');
-}
+function renderToConfirm(){
+  const tbody = document.getElementById('to-confirm-tbody');
+  const badge = document.getElementById('to-confirm-count');
+  const empty = document.getElementById('to-confirm-empty');
+  const table = document.getElementById('to-confirm-table');
+  if(!tbody) return;
 
-function checkApprovalPwd(){
-  const pwd = document.getElementById('approval-pwd').value;
-  if(pwd==='6411'){
-    state.approvalUnlocked = true;
-    closeModal('modal-aprobar');
-    enterApprovalMode();
-  } else {
-    document.getElementById('approval-error').style.display='';
+  // Reservas aprobadas que no están aún confirmadas como venta
+  const list = state.reservas.filter(r => r.estado !== 'confirmada');
+
+  if(badge) badge.textContent = list.length;
+
+  if(!list.length){
+    if(empty) empty.style.display = '';
+    if(table) table.style.display = 'none';
+    return;
   }
-}
+  if(empty) empty.style.display = 'none';
+  if(table) table.style.display = '';
 
-function enterApprovalMode(){
-  notify('Modo aprobación activado — Emiliano','info');
+  const d = today();
+  tbody.innerHTML = list.map(r=>{
+    const s=getSoporte(r.soporteId);
+    const cat=s?getCat(s.catId):null;
+    const rango=(r.rangos||[{}])[0];
+    const dv=getDaysUntilVence(r);
+    const activa=isActiveOnDate(r,d);
+    return `<tr>
+      <td class="muted" style="font-size:11px">${r.id||'—'}</td>
+      <td><strong>${s?s.name:r.soporteId}</strong><br><span style="font-size:11px;color:var(--gray-400)">${cat?cat.icon+' '+cat.name:''}</span></td>
+      <td>${r.cliente}</td>
+      <td style="white-space:nowrap">${fmtDate(rango.desde)}<br><span style="font-size:11px;color:var(--gray-400)">${fmtDate(rango.hasta)}</span></td>
+      <td>${r.cant}</td>
+      <td>${fmtMoney(r.valor)}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="doConfirmarVenta('${r.id}')">✓ Confirmar venta</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function verPendiente(id){
@@ -1492,6 +1569,7 @@ function approvePendiente(id){
   state.pendientes = state.pendientes.filter(x=>x.id!==id);
   pushNew(r);
   closeModal('modal-ver-pendiente');
+  renderAprobaciones();
   renderReservas();
   renderDisponibilidad();
   updateVenceBadge();
@@ -1503,7 +1581,7 @@ function rejectPendiente(id){
   if(!r) return;
   state.pendientes = state.pendientes.filter(x=>x.id!==id);
   closeModal('modal-ver-pendiente');
-  renderPendientes();
+  renderAprobaciones();
   notify(`Reserva de ${r.cliente} rechazada`,'info');
 }
 
@@ -1564,6 +1642,7 @@ async function doConfirmarVenta(id){
   r.estado = 'confirmada';
   closeModal('modal-ver-reserva');
   renderReservas();
+  if(state.approvalUnlocked) renderAprobaciones();
   notify(`✓ Venta de ${r.cliente} confirmada`,'success');
 }
 
@@ -1583,6 +1662,10 @@ function updateVenceBadge(){
   const n = state.reservas.filter(r=>{const dv=getDaysUntilVence(r);return dv>=0&&dv<=7;}).length;
   const el = document.getElementById('badge-vence');
   if(n>0){ el.style.display=''; el.textContent=n; } else el.style.display='none';
+  // Pending nav badge
+  const np = (state.pendientes||[]).length;
+  const ep = document.getElementById('badge-pending');
+  if(ep){ ep.style.display=np?'':'none'; ep.textContent=np; }
 }
 
 // =============================================
