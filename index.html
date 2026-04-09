@@ -615,16 +615,39 @@ textarea{resize:vertical;min-height:80px}
         </div>
       </div>
       <div class="card card-pad" style="margin-bottom:16px">
-        <div class="section-title">Claude IA</div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label>API Key</label>
+        <div class="section-title">Inteligencia Artificial</div>
+        <!-- Provider toggle -->
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Proveedor de IA (Chat + Escanear)</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button id="ai-btn-claude" onclick="setAIProvider('claude')"
+              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
+              🤖 Claude (Anthropic)
+            </button>
+            <button id="ai-btn-gemini" onclick="setAIProvider('gemini')"
+              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
+              ✨ Gemini (Google)
+            </button>
+          </div>
+        </div>
+        <!-- Claude key -->
+        <div id="cfg-claude-section" class="form-group" style="margin-bottom:12px">
+          <label>API Key — Anthropic Claude</label>
           <input type="password" id="cfg-claude" placeholder="sk-ant-api03-...">
+          <div style="margin-top:6px;font-size:11px;color:var(--gray-400)">
+            Créditos en <a href="https://console.anthropic.com" target="_blank" style="color:var(--orange)">console.anthropic.com</a>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="saveCfgClaude()">Guardar key</button>
-        <div style="margin-top:10px;font-size:12px;color:var(--gray-400)">
-          Requerida para Escanear orden y Chat IA.<br>
-          Cargar créditos en <a href="https://console.anthropic.com" target="_blank" style="color:var(--orange)">console.anthropic.com</a>
+        <!-- Gemini key -->
+        <div id="cfg-gemini-section" class="form-group" style="margin-bottom:12px;display:none">
+          <label>API Key — Google Gemini</label>
+          <input type="password" id="cfg-gemini" placeholder="AIzaSy...">
+          <div style="margin-top:6px;font-size:11px;color:var(--gray-400)">
+            Key gratuita en <a href="https://aistudio.google.com" target="_blank" style="color:var(--orange)">aistudio.google.com</a> → Get API Key
+          </div>
         </div>
+        <button class="btn btn-primary" onclick="saveCfgIA()">Guardar</button>
+        <div id="cfg-ia-status" style="margin-top:10px;font-size:12px;color:var(--gray-400)"></div>
       </div>
       <div class="card card-pad">
         <div class="section-title">Perfil</div>
@@ -791,8 +814,10 @@ textarea{resize:vertical;min-height:80px}
 // =============================================
 // CONFIGURACIÓN
 // =============================================
-let SCRIPT_URL = localStorage.getItem('sa_script_url') || '';
-let CLAUDE_KEY  = localStorage.getItem('sa_claude_key') || '';
+let SCRIPT_URL   = localStorage.getItem('sa_script_url') || '';
+let CLAUDE_KEY   = localStorage.getItem('sa_claude_key') || '';
+let GEMINI_KEY   = localStorage.getItem('sa_gemini_key') || '';
+let AI_PROVIDER  = localStorage.getItem('sa_ai_provider') || 'claude'; // 'claude' | 'gemini'
 let USERNAME    = localStorage.getItem('sa_nombre') || 'Movimagen';
 let USERROLE    = localStorage.getItem('sa_rol') || 'Vendedor';
 
@@ -2032,12 +2057,16 @@ function renderChatRecent(){
 }
 
 async function callAI(messages, systemPrompt){
-  if(!CLAUDE_KEY) throw new Error('Configurá la API key de Claude en la sección Config');
-  const body = {
-    model:'claude-sonnet-4-5',
-    max_tokens:1000,
-    messages
-  };
+  if(AI_PROVIDER === 'gemini'){
+    return callGemini(messages, systemPrompt);
+  } else {
+    return callClaude(messages, systemPrompt);
+  }
+}
+
+async function callClaude(messages, systemPrompt){
+  if(!CLAUDE_KEY) throw new Error('Configurá la API key de Claude en Configuración');
+  const body = { model:'claude-sonnet-4-5', max_tokens:1000, messages };
   if(systemPrompt) body.system = systemPrompt;
   const res = await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -2050,8 +2079,38 @@ async function callAI(messages, systemPrompt){
     body:JSON.stringify(body)
   });
   const data = await res.json();
-  if(!res.ok) throw new Error(data.error?.message||'Error API '+res.status);
+  if(!res.ok) throw new Error(data.error?.message||'Error Claude '+res.status);
   return (data.content||[]).map(b=>b.text||'').join('');
+}
+
+async function callGemini(messages, systemPrompt){
+  if(!GEMINI_KEY) throw new Error('Configurá la API key de Gemini en Configuración');
+  // Build contents array for Gemini
+  const contents = [];
+  if(systemPrompt){
+    contents.push({ role:'user',  parts:[{text: systemPrompt}] });
+    contents.push({ role:'model', parts:[{text: 'Entendido.'}] });
+  }
+  messages.forEach(m=>{
+    const role = m.role==='assistant' ? 'model' : 'user';
+    if(typeof m.content === 'string'){
+      contents.push({ role, parts:[{text: m.content}] });
+    } else if(Array.isArray(m.content)){
+      const parts = m.content.map(p=>{
+        if(p.type==='text') return {text: p.text};
+        if(p.type==='image') return {inlineData:{ mimeType:p.source.media_type, data:p.source.data }};
+        return {text:''};
+      }).filter(p=>p.text!=='' || p.inlineData);
+      contents.push({ role, parts });
+    }
+  });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+    { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents}) }
+  );
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error?.message||'Error Gemini '+res.status);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 function buildContextForAI(){
@@ -2296,9 +2355,11 @@ function loadConfigForm(){
   document.getElementById('cfg-content').style.display = '';
   document.getElementById('cfg-script').value = SCRIPT_URL;
   document.getElementById('cfg-claude').value = CLAUDE_KEY;
+  document.getElementById('cfg-gemini').value = GEMINI_KEY;
   document.getElementById('cfg-nombre').value = USERNAME;
   document.getElementById('cfg-rol').value = USERROLE;
   document.getElementById('cfg-sheet-status').textContent = state.sheetConnected ? '✓ Conectado' : 'Sin conectar';
+  updateAIProviderUI();
 }
 
 function checkCfgLock(){
@@ -2316,10 +2377,52 @@ function saveCfgSheet(){
   if(url){ SCRIPT_URL=url; localStorage.setItem('sa_script_url',url); loadFromSheet(); }
 }
 
-function saveCfgClaude(){
-  const key = document.getElementById('cfg-claude').value.trim();
-  if(key){ CLAUDE_KEY=key; localStorage.setItem('sa_claude_key',key); notify('API Key guardada ✓','success'); }
+function setAIProvider(provider){
+  AI_PROVIDER = provider;
+  localStorage.setItem('sa_ai_provider', provider);
+  updateAIProviderUI();
 }
+
+function updateAIProviderUI(){
+  const isClaude = AI_PROVIDER === 'claude';
+  // Toggle key sections
+  document.getElementById('cfg-claude-section').style.display = isClaude ? '' : 'none';
+  document.getElementById('cfg-gemini-section').style.display = isClaude ? 'none' : '';
+  // Style buttons
+  const btnClaude = document.getElementById('ai-btn-claude');
+  const btnGemini = document.getElementById('ai-btn-gemini');
+  if(btnClaude){
+    btnClaude.style.borderColor = isClaude ? 'var(--orange)' : 'var(--gray-200)';
+    btnClaude.style.background  = isClaude ? 'var(--orange-pale)' : 'var(--white)';
+    btnClaude.style.color       = isClaude ? 'var(--orange-deep)' : 'var(--gray-600)';
+  }
+  if(btnGemini){
+    btnGemini.style.borderColor = !isClaude ? 'var(--orange)' : 'var(--gray-200)';
+    btnGemini.style.background  = !isClaude ? 'var(--orange-pale)' : 'var(--white)';
+    btnGemini.style.color       = !isClaude ? 'var(--orange-deep)' : 'var(--gray-600)';
+  }
+  // Status
+  const status = document.getElementById('cfg-ia-status');
+  if(status){
+    const hasKey = isClaude ? !!CLAUDE_KEY : !!GEMINI_KEY;
+    status.textContent = hasKey
+      ? `✓ Usando ${isClaude?'Claude (Anthropic)':'Gemini (Google)'}`
+      : `Sin key configurada`;
+    status.style.color = hasKey ? 'var(--green)' : 'var(--gray-400)';
+  }
+}
+
+function saveCfgIA(){
+  const claudeKey = document.getElementById('cfg-claude').value.trim();
+  const geminiKey = document.getElementById('cfg-gemini').value.trim();
+  if(claudeKey){ CLAUDE_KEY=claudeKey; localStorage.setItem('sa_claude_key',claudeKey); }
+  if(geminiKey){ GEMINI_KEY=geminiKey; localStorage.setItem('sa_gemini_key',geminiKey); }
+  updateAIProviderUI();
+  notify(`IA: ${AI_PROVIDER==='claude'?'Claude':'Gemini'} configurado ✓`,'success');
+}
+
+// Keep old name for scanner compatibility
+function saveCfgClaude(){ saveCfgIA(); }
 
 function saveCfgPerfil(){
   USERNAME = document.getElementById('cfg-nombre').value.trim()||'Movimagen';
