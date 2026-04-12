@@ -4,39 +4,51 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Movimagen · StockAds</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --orange:#F4611E; --orange-light:#FF8040; --orange-pale:#FFF0E8; --orange-deep:#C44A0E;
-  --white:#FFFFFF; --off:#FAFAF8;
-  --gray-100:#F4F3F0; --gray-200:#E8E6E1; --gray-400:#B0ACA4; --gray-600:#6E6A62; --gray-800:#2E2B26;
-  --green:#22A868; --green-pale:#E6F7EF;
-  --red:#E53E3E; --red-pale:#FEF0F0;
-  --amber:#D97706; --amber-pale:#FFFBEB;
-  --radius:12px; --shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.04);
+  --orange: #eb691c;
+  --orange-light: #f07f3c;
+  --orange-pale: #fdf0e8;
+  --orange-deep: #c45a10;
+  --white: #ffffff;
+  --off: #fafaf9;
+  --gray-100: #f4f3f0;
+  --gray-200: #e8e6e1;
+  --gray-400: #b0aba3;
+  --gray-600: #6e6a62;
+  --gray-800: #2e2b26;
+  --green: #1a9a5e;
+  --green-pale: #e6f7ef;
+  --red: #d63b3b;
+  --red-pale: #fef0f0;
+  --amber: #c97000;
+  --amber-pale: #fffbeb;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 14px rgba(0,0,0,0.04);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--gray-800);min-height:100vh;display:flex}
+body{font-family:'Montserrat',sans-serif;background:var(--off);color:var(--gray-800);min-height:100vh;display:flex}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:99px}
 
 /* SIDEBAR */
-.sidebar{width:220px;min-height:100vh;background:var(--gray-800);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
-.logo{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.logo-mark{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--orange);letter-spacing:-.5px}
+.sidebar{width:220px;min-height:100vh;background:var(--white);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.logo{padding:28px 24px 24px;border-bottom:1px solid var(--gray-200)}
+.logo-mark{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--orange);letter-spacing:-.5px}
 .logo-sub{font-size:10px;color:var(--gray-400);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
 .nav{padding:16px 12px;flex:1;overflow-y:auto}
 .nav-section{font-size:10px;color:var(--gray-400);letter-spacing:1.5px;text-transform:uppercase;padding:12px 12px 6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13.5px;color:var(--gray-400);cursor:pointer;transition:all .15s;margin-bottom:2px}
-.nav-item:hover{background:rgba(255,255,255,0.06);color:#fff}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13.5px;color:var(--gray-600);cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav-item:hover{background:var(--gray-100);color:var(--gray-800)}
 .nav-item.active{background:var(--orange);color:#fff}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;margin-left:auto}
-.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.08)}
+.sidebar-footer{padding:16px;border-top:1px solid var(--gray-200)}
 .user-pill{display:flex;align-items:center;gap:10px}
 .avatar{width:32px;height:32px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
-.user-info .name{font-size:13px;color:#fff;font-weight:500}
+.user-info .name{font-size:13px;color:var(--gray-800);font-weight:500}
 .user-info .role{font-size:11px;color:var(--gray-400)}
 
 /* MAIN */
@@ -44,14 +56,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--gray-800
 
 /* TOPBAR */
 .topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.page-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--gray-800)}
+.page-title{font-family:'Montserrat',sans-serif;font-size:17px;font-weight:700;color:var(--gray-800)}
 .topbar-actions{display:flex;align-items:center;gap:10px}
 .topbar-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-400)}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-400)}
 .status-dot.on{background:var(--green)}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'Montserrat',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s}
 .btn-primary{background:var(--orange);color:#fff}
 .btn-primary:hover{background:var(--orange-deep)}
 .btn-outline{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
@@ -73,7 +85,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--gray-800
 .metrics-row.cols3{grid-template-columns:repeat(3,1fr)}
 .metric-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:18px 20px}
 .metric-label{font-size:11.5px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.metric-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--gray-800);line-height:1}
+.metric-value{font-family:'Montserrat',sans-serif;font-size:28px;font-weight:700;color:var(--gray-800);line-height:1}
 .metric-value.sm{font-size:22px}
 .metric-change{font-size:12px;margin-top:6px;color:var(--gray-400)}
 .metric-card.accent{background:var(--orange);border-color:var(--orange)}
@@ -94,9 +106,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--gray-800
 
 /* FILTERS */
 .filters{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.filter-input{padding:7px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--gray-800);background:var(--white);outline:none;transition:border .15s}
+.filter-input{padding:7px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Montserrat',sans-serif;color:var(--gray-800);background:var(--white);outline:none;transition:border .15s}
 .filter-input:focus{border-color:var(--orange)}
-.filter-select{padding:7px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--gray-800);background:var(--white);outline:none;cursor:pointer}
+.filter-select{padding:7px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Montserrat',sans-serif;color:var(--gray-800);background:var(--white);outline:none;cursor:pointer}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse;font-size:13.5px}
@@ -113,7 +125,7 @@ td.muted{color:var(--gray-400)}
 .cal-strip::-webkit-scrollbar{display:none}
 .cal-day{flex:1 0 0;min-width:36px;max-width:46px;padding:6px 0;text-align:center;border-radius:8px;border:1.5px solid var(--gray-200);cursor:pointer;transition:all .15s}
 .cal-day .day-name{font-size:9px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
-.cal-day .day-num{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--gray-800);margin:1px 0}
+.cal-day .day-num{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--gray-800);margin:1px 0}
 .cal-day .day-avail{font-size:9px;color:var(--green)}
 .cal-day:hover{border-color:var(--orange-light);background:var(--orange-pale)}
 .cal-day.selected{border-color:var(--orange);background:var(--orange)}
@@ -131,7 +143,7 @@ td.muted{color:var(--gray-400)}
 .support-id{font-size:11px;color:var(--gray-400);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .support-name{font-weight:600;font-size:14px;color:var(--gray-800);margin-bottom:4px}
 .support-meta{font-size:12px;color:var(--gray-600);margin-bottom:10px}
-.support-occ{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--orange)}
+.support-occ{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:var(--orange)}
 .support-card .badge{position:absolute;top:14px;right:14px}
 .type-icon{width:36px;height:36px;border-radius:8px;background:var(--orange-pale);display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px}
 .occ-bar{height:4px;background:var(--gray-100);border-radius:4px;overflow:hidden;margin-top:6px}
@@ -154,14 +166,14 @@ td.muted{color:var(--gray-400)}
 .msg-ai .msg-bubble{background:var(--gray-100);color:var(--gray-800);border-radius:4px 12px 12px 12px}
 .msg-user .msg-bubble{background:var(--orange);color:#fff;border-radius:12px 4px 12px 12px}
 .chat-input-area{padding:14px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px}
-.chat-input{flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13.5px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s;resize:none;height:40px}
+.chat-input{flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13.5px;font-family:'Montserrat',sans-serif;outline:none;transition:border .15s;resize:none;height:40px}
 .chat-input:focus{border-color:var(--orange)}
 .send-btn{width:40px;height:40px;border-radius:10px;background:var(--orange);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 .send-btn:hover{background:var(--orange-deep)}
 .chat-sidebar{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
 .quick-actions{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px}
 .qa-title{font-size:12px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
-.qa-btn{display:block;width:100%;text-align:left;padding:8px 12px;background:var(--gray-100);border:none;border-radius:8px;font-size:12.5px;font-family:'DM Sans',sans-serif;color:var(--gray-600);cursor:pointer;margin-bottom:6px;transition:all .15s}
+.qa-btn{display:block;width:100%;text-align:left;padding:8px 12px;background:var(--gray-100);border:none;border-radius:8px;font-size:12.5px;font-family:'Montserrat',sans-serif;color:var(--gray-600);cursor:pointer;margin-bottom:6px;transition:all .15s}
 .qa-btn:hover{background:var(--orange-pale);color:var(--orange-deep)}
 .recent-reservas{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px}
 .reserva-item{padding:8px 0;border-bottom:1px solid var(--gray-100)}
@@ -181,7 +193,7 @@ td.muted{color:var(--gray-400)}
 .list-item:last-child{border-bottom:none}
 .list-name{font-size:13px;font-weight:500}
 .list-sub{font-size:11px;color:var(--gray-400);margin-top:1px}
-.list-val{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--orange)}
+.list-val{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--orange)}
 .progress-bar{height:4px;background:var(--gray-200);border-radius:4px;margin-top:4px;overflow:hidden;min-width:80px}
 .progress-fill{height:100%;background:var(--orange);border-radius:4px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -191,7 +203,7 @@ td.muted{color:var(--gray-400)}
 .form-group{display:flex;flex-direction:column;gap:5px}
 .form-group.full{grid-column:1/-1}
 label{font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px}
-input,select,textarea{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'DM Sans',sans-serif;color:var(--gray-800);outline:none;transition:border .15s;background:var(--white)}
+input,select,textarea{padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13.5px;font-family:'Montserrat',sans-serif;color:var(--gray-800);outline:none;transition:border .15s;background:var(--white)}
 input:focus,select:focus,textarea:focus{border-color:var(--orange)}
 textarea{resize:vertical;min-height:80px}
 
@@ -199,16 +211,16 @@ textarea{resize:vertical;min-height:80px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:16px;width:600px;max-width:100%;padding:28px;max-height:90vh;overflow-y:auto}
-.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px}
+.modal-title{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .modal-wide{width:720px}
 
 /* TABS */
 .tabs{display:flex;gap:2px;background:var(--gray-100);border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content}
-.tab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray-600);transition:all .15s;border:none;background:none;font-family:'DM Sans',sans-serif}
+.tab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray-600);transition:all .15s;border:none;background:none;font-family:'Montserrat',sans-serif}
 .tab.active{background:var(--white);color:var(--orange);box-shadow:0 1px 3px rgba(0,0,0,0.08)}
 
-.section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--gray-800);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:var(--gray-800);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
 
 /* TYPING */
 .typing{display:flex;gap:4px;align-items:center;padding:4px 0}
@@ -247,7 +259,7 @@ textarea{resize:vertical;min-height:80px}
 @keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* SETUP BANNER */
-#setup-banner{position:fixed;top:0;left:0;right:0;z-index:500;background:var(--gray-800);border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 20px;display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap}
+#setup-banner{position:fixed;top:0;left:0;right:0;z-index:500;background:var(--orange);border-bottom:1px solid var(--orange-deep);padding:10px 20px;display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap}
 #setup-banner.hidden{display:none}
 .setup-body{margin-top:56px}
 
@@ -263,8 +275,8 @@ textarea{resize:vertical;min-height:80px}
 <!-- SETUP BANNER -->
 <div id="setup-banner" class="hidden">
   <span style="color:var(--orange);font-weight:600;white-space:nowrap">⚙️ Configuración</span>
-  <input id="url-input" placeholder="URL del Apps Script" style="flex:3;min-width:180px;padding:6px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px">
-  <input id="key-input" placeholder="Claude API Key (sk-ant-...)" type="password" style="flex:2;min-width:160px;padding:6px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:12px">
+  <input id="url-input" placeholder="URL del Apps Script" style="flex:3;min-width:180px;padding:6px 10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;font-size:12px">
+  <input id="key-input" placeholder="Claude API Key (sk-ant-...)" type="password" style="flex:2;min-width:160px;padding:6px 10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;font-size:12px">
   <button onclick="saveConfig()" style="padding:6px 14px;background:var(--orange);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">Guardar</button>
   <button onclick="useDemoMode()" style="padding:6px 10px;background:transparent;color:var(--gray-400);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:12px;cursor:pointer">Demo</button>
 </div>
@@ -272,7 +284,8 @@ textarea{resize:vertical;min-height:80px}
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo" style="padding:20px 20px 16px">
-    <img src="logo.png" alt="Movimagen" style="width:100%;max-width:140px;height:auto;display:block">
+    <img src="logo.png" alt="Movimagen" style="width:100%;max-width:140px;height:auto;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div style="display:none;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:var(--orange);letter-spacing:-.5px">movimagen<span style="display:block;font-size:10px;font-weight:500;color:var(--gray-400);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">StockAds 2026</span></div>
     <div class="logo-sub" style="margin-top:6px">StockAds 2026</div>
   </div>
   <nav class="nav">
@@ -373,7 +386,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <button class="btn btn-outline btn-sm" onclick="changeCalMonth(-1)">‹</button>
-        <span id="cal-month-label" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;min-width:140px;text-align:center"></span>
+        <span id="cal-month-label" style="font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;min-width:140px;text-align:center"></span>
         <button class="btn btn-outline btn-sm" onclick="changeCalMonth(1)">›</button>
       </div>
       <div class="cal-strip" id="cal-strip"></div>
@@ -411,11 +424,11 @@ textarea{resize:vertical;min-height:80px}
 
     <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap" id="disp-stats">
       <div style="background:var(--green-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)" id="cnt-disp">0</span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:var(--green)" id="cnt-disp">0</span>
         <span style="font-size:12px;color:#1a7a4e">Disponibles</span>
       </div>
       <div style="background:var(--red-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--red)" id="cnt-ocup">0</span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:var(--red)" id="cnt-ocup">0</span>
         <span style="font-size:12px;color:#c53030">Ocupados</span>
       </div>
     </div>
@@ -593,7 +606,7 @@ textarea{resize:vertical;min-height:80px}
     <!-- Lock -->
     <div id="cfg-lock" style="text-align:center;padding:60px 20px">
       <div style="font-size:48px;margin-bottom:16px">🔐</div>
-      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Configuración</div>
+      <div style="font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Configuración</div>
       <div style="font-size:13px;color:var(--gray-400);margin-bottom:24px">Ingresá la contraseña para acceder</div>
       <div style="display:flex;justify-content:center;gap:10px;align-items:center">
         <input type="password" id="cfg-lock-pwd" placeholder="Contraseña" style="width:160px;text-align:center"
@@ -621,11 +634,11 @@ textarea{resize:vertical;min-height:80px}
           <label>Proveedor de IA (Chat + Escanear)</label>
           <div style="display:flex;gap:8px;margin-top:6px">
             <button id="ai-btn-claude" onclick="setAIProvider('claude')"
-              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
+              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
               🤖 Claude (Anthropic)
             </button>
             <button id="ai-btn-gemini" onclick="setAIProvider('gemini')"
-              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
+              style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--gray-200);background:var(--white);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:500;transition:all .15s">
               ✨ Gemini (Google)
             </button>
           </div>
@@ -673,7 +686,7 @@ textarea{resize:vertical;min-height:80px}
     <!-- Bloqueo si no está desbloqueado -->
     <div id="aprov-lock" style="display:none;text-align:center;padding:60px 20px">
       <div style="font-size:48px;margin-bottom:16px">🔐</div>
-      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Acceso restringido</div>
+      <div style="font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Acceso restringido</div>
       <div style="font-size:13px;color:var(--gray-400);margin-bottom:24px">Esta sección es solo para Emiliano</div>
       <div style="display:flex;justify-content:center;gap:10px;align-items:center">
         <input type="password" id="lock-pwd" placeholder="Contraseña" style="width:160px;text-align:center"
@@ -1149,11 +1162,11 @@ function renderConsulta(){
   area.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:18px">
       <div style="background:var(--green-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)">${nDisp}</span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:var(--green)">${nDisp}</span>
         <span style="font-size:12px;color:#1a7a4e">Con disponibilidad</span>
       </div>
       <div style="background:var(--red-pale);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--red)">${nOcup}</span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:var(--red)">${nOcup}</span>
         <span style="font-size:12px;color:#c53030">Sin disponibilidad</span>
       </div>
       <div style="background:var(--gray-100);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:8px;color:var(--gray-600);font-size:12px">
@@ -1360,11 +1373,11 @@ function showSoporteDetalle(soporteId){
       </div>
       <div style="flex:1;min-width:180px;background:var(--gray-100);border-radius:10px;padding:16px">
         <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Capacidad total</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700">${cap} <span style="font-size:13px;font-weight:400;color:var(--gray-400)">${s.unit||'espacios'}</span></div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700">${cap} <span style="font-size:13px;font-weight:400;color:var(--gray-400)">${s.unit||'espacios'}</span></div>
       </div>
       <div style="flex:1;min-width:180px;background:var(--orange-pale);border-radius:10px;padding:16px">
         <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Disponible el ${dStr}</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--orange)">${disponible} <span style="font-size:13px;font-weight:400;color:var(--gray-400)">${s.unit||'espacios'}</span></div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700;color:var(--orange)">${disponible} <span style="font-size:13px;font-weight:400;color:var(--gray-400)">${s.unit||'espacios'}</span></div>
       </div>
       <div style="flex:1;min-width:120px;background:var(--gray-100);border-radius:10px;padding:16px;display:flex;align-items:center;gap:10px">
         <span class="badge ${bc}">${bl}</span>
@@ -1550,7 +1563,7 @@ function renderReservas(){
     const rows = groups[key];
     return `
       <div style="padding:12px 20px 0;background:var(--gray-100);border-bottom:1px solid var(--gray-200)">
-        <span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--gray-600)">${label}</span>
+        <span style="font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--gray-600)">${label}</span>
         <span style="font-size:11px;color:var(--gray-400);margin-left:8px">${rows.length} reserva${rows.length!==1?'s':''}</span>
       </div>
       <table>
